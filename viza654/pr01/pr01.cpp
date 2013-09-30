@@ -19,7 +19,17 @@
 #include <cstdlib>
 #include <iostream>
 #include <GL/glut.h>
-
+#include<iostream>
+#include<cstdio>
+#include<cmath>
+#include<vector>
+#include<stack>
+#include<queue>
+#include<map>
+#include<sstream>
+#include<algorithm>
+#include<string>
+#include<limits.h>
 #include <fstream>
 #include <cassert>
 #include <sstream>
@@ -40,14 +50,17 @@ unsigned char *pixmap;
 // This function stores the RGB values of each pixel to "pixmap."
 // Then, "glutDisplayFunc" below will use pixmap to display the pixel colors.
 // =============================================================================
-void setPixels()
+void fillColor(int r, int g, int b, int stx = 0, int sty = 0, int endx = width , int endy = height)
 {
-   for(int y = 0; y < height ; y++) {
-     for(int x = 0; x < width; x++) {
+	if( r < 0 || b < 0 || g < 0 || r > 255 || g > 255 || b > 255)
+		cout<<"RGB should be between 0 to 255\n";
+
+   for(int y = sty; y < endy ; y++) {
+     for(int x = stx; x < endx; x++) {
        int i = (y * width + x) * 3; 
-       pixmap[i++] = 255;
-       pixmap[i++] = 0xFF; //Do you know what "0xFF" represents? Google it!
-       pixmap[i] = 0x00; //Learn to use the "0x" notation to your advantage.
+       pixmap[i++] = r;
+       pixmap[i++] = g; 
+       pixmap[i] = b;     
      }
    }
 }
@@ -93,29 +106,85 @@ static void init(void)
 // =============================================================================
 int main(int argc, char *argv[])
 {
+	// Check the number of parameters
+	if (argc < 2) {
+		// Tell the user how to run the program
+		std::cout<< "Usage: " << argv[0] << " option" << std::endl;
+		/* "Usage messages" are a conventional way of telling the user
+		 * how to run a program if they enter the command incorrectly.
+		 */
+		return 1;
+	}
+	string input = argv[1];
+	
+	cout<< "input arg is : " <<input<<endl;
+	//initialize the global variables
+	width = 640;
+	height = 480;
+	pixmap = new unsigned char[width * height * 3];  //Do you know why "3" is used?
 
-  //initialize the global variables
-  width = 300;
-  height = 300;
-  pixmap = new unsigned char[width * height * 3];  //Do you know why "3" is used?
+	if(input == "red")
+		fillColor(255,0,0);
+	else if(input == "green")
+		fillColor(0,255,0);
+	else  if(input == "blue")
+		fillColor(0,0,255);
+	else  if(input == "all")
+	{
+		fillColor(0,0,255,0,0,width/2,height/2);
+		fillColor(255,255,0,(width/2) +1,0,width,height/2);
+		fillColor(255,0,0,0,(height/2) +1,width/2,height);
+		fillColor(0,255,0,(width/2)+1,(height/2) +1,width,height);
 
-  setPixels();
+	}
+	else  if(input == "circle")
+	{
+		double radius = 135,centerY= height/2,centerX= width/2;
+		int r = 0,g = 0,b=0;
+		for(int y = 0; y < height ; y++) {
+			for(int x = 0; x< width; x++) {
+				int i = (y * width + x) * 3; 
+				// cout<<"x: "<<x<<"y: "<<y<<"i: "<<i<<endl;
+				if( (x-centerX)*(x- centerX) + (y-centerY)*(y-centerY) - radius*radius <=0 )
+				{
+					r = 255; b = 0;g=255;
+				}
+				else
+				{
+					r = 0; b = 255;g=0;
+				}
+				pixmap[i++] = r;
+				pixmap[i++] = g; 
+				pixmap[i] = b;     
+			}
+		}
 
+		// fillColor(255,0,0);
+	}
+	else  if(input == "random")
+	{
+		fillColor(255,0,0);
+	}
+	else
+	{
+		cout<<"invalid argument\n";
+		return 1;
+	}
 
-  // OpenGL Commands:
-  // Once "glutMainLoop" is executed, the program loops indefinitely to all
-  // glut functions.  
-  glutInit(&argc, argv);
-  glutInitWindowPosition(100, 100); // Where the window will display on-screen.
-  glutInitWindowSize(width, height);
-  glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
-  glutCreateWindow("Homework Zero");
-  init();
-  glutReshapeFunc(windowResize);
-  glutDisplayFunc(windowDisplay);
-  glutMouseFunc(processMouse);
-  glutMainLoop();
+	// OpenGL Commands:
+	// Once "glutMainLoop" is executed, the program loops indefinitely to all
+	// glut functions.  
+	glutInit(&argc, argv);
+	glutInitWindowPosition(100, 100); // Where the window will display on-screen.
+	glutInitWindowSize(width, height);
+	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+	glutCreateWindow("pr01");
+	init();
+	glutReshapeFunc(windowResize);
+	glutDisplayFunc(windowDisplay);
+	glutMouseFunc(processMouse);
+	glutMainLoop();
 
-  return 0; //This line never gets reached. We use it because "main" is type int.
+	return 0; //This line never gets reached. We use it because "main" is type int.
 }
 
