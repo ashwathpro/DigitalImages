@@ -230,7 +230,8 @@ vector<Point3f> swapPoints(vector<Point3f> v, int src, int dest )
 	v[dest] = t;
 	return v;
 }
-
+void UniformClusterImage(const string inputImage,int k)
+{}
 void KmeansClusterImage(const string inputImage,int k)
 {
 
@@ -389,22 +390,50 @@ int main(int argc, char *argv[])
 	pixmap = new unsigned char[width * height * 3]; 
 	if(input == "reduce")
 	{
-	    if (argc < 4) {
-		    std::cout<< "Usage: " << argv[0] << " reduce <input image> <number of colors to reduce>" << std::endl;
-    		return 1;
-    	}
-    	string inputImage = argv[2];
-	    int k = atoi(argv[3]);
-	    cout<<"number of colors = "<<k<<endl;
-	    KmeansClusterImage(inputImage,k);
-		
+		if (argc < 4) {
+			std::cout<< "Usage: " << argv[0] << " reduce <input image> <number of colors to reduce>" << std::endl;
+			return 1;
+		}
+		string inputImage = argv[2];
+		int k = atoi(argv[3]);
+		cout<<"number of colors = "<<k<<endl;
+		KmeansClusterImage(inputImage,k);
+
+
 
 
 	}
 	else  if(input == "replace")
 	{
+		if (argc < 4) {
+			std::cout<< "Usage: " << argv[0] << " replace <input image> <R G B of src color> <R G B of dest color> <threshold>" << std::endl;
+			return 1;
+		}
+		string inputImage = argv[2];
+		pixmap = readPPM(inputImage);
+		int sR = atoi(argv[3]),sG = atoi(argv[4]),sB = atoi(argv[5]);
+		int dR = atoi(argv[6]),dG = atoi(argv[7]),dB = atoi(argv[8]);
+		int thresh = atoi(argv[9]),pixel,red,blue,green;
+		for(int y = height-1; y >= 0; y--) 
+		{
+			for(int x = 0; x < width; x++) 
+			{
+				pixel = (y * width + x) * 3; 
+				red = pixmap[pixel];green = pixmap[pixel+1];blue = pixmap[pixel+2];
+				if( (red >sR-thresh && red < sR+thresh) &&
+					(green >sG-thresh && green< sG+thresh) &&
+					(blue >sB-thresh && blue < sB+thresh) 	)
+				{
+					pixmap[pixel] = dR;
+					pixmap[pixel+1] = dG;
+					pixmap[pixel+2] = dB;
+				}
 
-		
+				
+			}
+		}
+
+
 
 
 	}
@@ -412,8 +441,6 @@ int main(int argc, char *argv[])
 	{
 
 		
-
-
 	}	
 	else
 	{

@@ -17,8 +17,6 @@
 blue_ white: ash@ash-laptop:~/code/DigitalImages/viza654/pr04$ ./pr04 replace colors.ppm 4 4 60 255 255 255 30
 white_black: ash@ash-laptop:~/code/DigitalImages/viza654/pr04$ ./pr04 replace colors.ppm 255 255 255 0 0 0 30
 
-ash@ash-laptop:~/code/DigitalImages/viza654/pr04$ ./pr04 reduce rainbow.ppm 5
-ash@ash-laptop:~/code/DigitalImages/viza654/pr04$ ./pr04 reduce rainbow.ppm 20
 
 </tr> 
 <tr>
