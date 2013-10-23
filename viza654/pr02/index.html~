@@ -154,6 +154,19 @@ star error 2
 </td>
 </tr>
 
+<tr>
+<td align=center>
+<font size=4>
+<img src=output/star_error1.png width=400><br>
+star error
+</td>
+<td align=center>
+<font size=4>
+<img src=random.png width=400><br>
+Input argument : random 
+</td>
+</tr> 
+
 
 </table>
 </center>

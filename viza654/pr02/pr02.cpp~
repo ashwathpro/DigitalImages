@@ -25,7 +25,10 @@
 #include <cassert>
 #include <sstream>
 #include <string>
+#include "cyPoint.h"
 
+
+using namespace cy;
 using namespace std;
 
 // =============================================================================
@@ -55,7 +58,79 @@ void fillColor(int r, int g, int b, int stx = 0, int sty = 0, int endx = width ,
    }
 }
 
+class ConvexQuadrilateral
+{
+	Point2f A,B,C,D;
+	ConvexQuadrilateral()
+	{
+		A = Point2f(10,10);
+		C = Point2f(100,100);
+		B = Point2f(10,100);
+		D = Point2f(100,10);
+	}
+	ConvexQuadrilateral(Point2f a, Point2f b, Point2f c, Point2f d)
+	{
+		A = a,B=b,C=c,D=d;
+	}
+	
+	bool isInsideQuadrilateral(Point2f p)
+	{
+		if( insideLine(A,B,p) && insideLine(B,C,p) && insideLine(C,D,p) && insideLine(D,A,p))
+			return true;
+		return false;
+	}
+	bool insideLine(Point2f A, Point2f B, Point2f p)
+	{
+		double f = p.x*(b.y-A.y)+p.y*(A.x-B.x)+B.x*A.y-A.x*B.y
+		if( f < 0 )
+			return true;
+		else
+			return false;
+		return false;
+	}
+};
 
+class Sphere
+{
+	public:
+	double radius;
+	Point3f center,color;
+	Sphere()
+	{
+		radius= 0.0;
+		center=Point3f(0,0,0);
+		color=Point3f(0,0,0);
+	}
+	Sphere(Point3f c, double rad,Point3f col)
+	{
+		radius= rad;
+		center=c;
+		color=col;
+	}
+	Sphere(Point3f c, double rad)
+	{
+		radius= rad;
+		center=c;
+		color=Point3f(1,1,1);
+	}
+	
+	Point3f getNormal(Point3f point)
+	{
+		Point3f n=point-center;
+		n.Normalize();
+		return n;
+	}
+	virtual bool isPointInside(Point3f Pe)
+	{
+		double c=(center-Pe)%(center-Pe)-(radius*radius);
+		
+		if(c>0)		//Point is inside the sphere 
+			return false;
+		else 	return true;
+	}
+	virtual Point3f getColor(){	return color;}
+	
+};
 
 // =============================================================================
 // OpenGL Display and Mouse Processing Functions.
@@ -118,12 +193,28 @@ int main(int argc, char *argv[])
 		fillColor(0,255,0);
 	else  if(input == "blue")
 		fillColor(0,0,255);
-	else  if(input == "all")
+	else  if(input == "convex")
 	{
-		fillColor(0,0,255,0,0,width/2,height/2);
-		fillColor(255,255,0,(width/2) +1,0,width,height/2);
-		fillColor(255,0,0,0,(height/2) +1,width/2,height);
-		fillColor(0,255,0,(width/2)+1,(height/2) +1,width,height);
+
+		ConvexQuadrilateral q;
+		for(int y = 0; y < height ; y++) {
+			for(int x = 0; x< width; x++) {
+				int i = (y * width + x) * 3; 
+				// cout<<"x: "<<x<<"y: "<<y<<"i: "<<i<<endl;
+				if( q.isInsideQuadrilateral(Point2f(x,y) ) )
+				{
+					r = 255; b = 0;g=255;
+				}
+				else
+				{
+					r = 0; b = 255;g=0;
+				}
+				pixmap[i++] = r;
+				pixmap[i++] = g; 
+				pixmap[i] = b;     
+			}
+		}
+
 
 	}
 	else  if(input == "circle")

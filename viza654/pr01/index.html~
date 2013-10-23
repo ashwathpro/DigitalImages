@@ -11,8 +11,8 @@
 </td>
 
 <td align=center>
-<font size=3><a href = "pr01.cpp">CPP file</a><br></font>
-<font size=3><a href = "Makefile">Make file</a> <br></font>
+<font size=6><a href = "pr01.cpp">CPP file</a><br></font>
+<font size=5><a href = "Makefile">Make file</a> <br></font>
 </td>
 
 </tr> 
