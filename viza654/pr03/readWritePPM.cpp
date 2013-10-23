@@ -1,0 +1,728 @@
+// =============================================================================
+// VIZA654/CSCE646 at Texas A&M University
+// Project 1
+// Created by Ashwath Rajendran 
+// This file is supplied with an associated makefile. Put both files in the same
+// directory, navigate to that directory from the Linux shell, and type 'make'.
+// This will create a program called 'pr01' that you can run by entering
+// =============================================================================
+
+#include <cstdlib>
+#include <iostream>
+#include <GL/glut.h>
+#include<iostream>
+#include<cstdio>
+#include<cmath>
+#include<vector>
+#include<stack>
+#include<queue>
+#include<map>
+#include<sstream>
+#include<algorithm>
+#include<string>
+#include<limits.h>
+#include <fstream>
+#include <cassert>
+#include <sstream>
+#include <string>
+#include "cyPoint.h"
+#include "Color.h"
+
+
+using namespace cy;
+using namespace std;
+#define print(p) printf("(%f,%f) \n",p.x,p.y);
+#define pb(a) push_back(a)
+
+// =============================================================================
+// These variables will store the input ppm image's width, height, and color
+// =============================================================================
+int width, height;
+unsigned char *pixmap;
+// =============================================================================
+// fillColor(int r, int g, int b, int stx = 0, int sty = 0, int endx = width , int endy = height) 
+//
+// This function stores the RGB values of each pixel to "pixmap."
+// It starts filling the given r,g,b values from stx,sty to endx,endy
+// Then, "glutDisplayFunc" below will use pixmap to display the pixel colors.
+// =============================================================================
+void fillColor(int r, int g, int b, int stx = 0, int sty = 0, int endx = width , int endy = height)
+{
+	if( r < 0 || b < 0 || g < 0 || r > 255 || g > 255 || b > 255)
+		cout<<"RGB should be between 0 to 255\n";
+
+   for(int y = sty; y < endy ; y++) {
+     for(int x = stx; x < endx; x++) {
+       int i = (y * width + x) * 3; 
+       pixmap[i++] = r;
+       pixmap[i++] = g; 
+       pixmap[i] = b;     
+     }
+   }
+}
+
+// =============================================================================
+// OpenGL Display and Mouse Processing Functions.
+//
+// You can read up on OpenGL and modify these functions, as well as the commands
+// in main(), to perform more sophisticated display or GUI behavior. This code
+// will service the bare minimum display needs for most assignments.
+// =============================================================================
+static void windowResize(int w, int h)
+{   
+  glViewport(0, 0, w, h);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(0,(w/2),0,(h/2),0,1); 
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity() ;
+}
+static void windowDisplay(void)
+{
+  glClear(GL_COLOR_BUFFER_BIT);
+  glRasterPos2i(0,0);
+  glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+  glDrawPixels(width, height, GL_RGB, GL_UNSIGNED_BYTE, pixmap);
+  glFlush();
+}
+static void processMouse(int button, int state, int x, int y)
+{
+  if(state == GLUT_UP)
+  exit(0);               // Exit on mouse click.
+}
+static void init(void)
+{
+  glClearColor(1,1,1,1); // Set background color.
+}
+
+
+class ConvexQuadrilateral
+{
+	public: 
+	Point2f A,B,C,D;
+	/* Points A,B,C,D go in clockwise direction starting with A in bottom left corner and C in top right corner
+	 * isLeft(A,B,C) Function IS sensitive to the ordering of A and B
+	 * A = line point 1; B = line point 2; C = point to check against.
+	 * Vector of AB, with A as tail, A --------> B = (B-A)
+	 * Hence, isLeft(B,A,C) will yield true, if C is either above or to the left of the vector AB
+	 */
+	ConvexQuadrilateral()
+	{
+		A = Point2f(10,10);
+		C = Point2f(100,100);
+		B = Point2f(10,100);
+		D = Point2f(100,10);
+	};
+	ConvexQuadrilateral(Point2f a, Point2f b, Point2f c, Point2f d)
+	{
+		A = a,B=b,C=c,D=d;
+	};
+	
+	bool isInsideQuadrilateral(Point2f p)
+	{
+		//if( !insideLine(A,B,p) && !insideLine(B,C,p) && insideLine(D,C,p) && insideLine(A,D,p))
+		if( !isLeft(A,B,p) && !isLeft(B,C,p) && !isLeft(C,D,p) && !isLeft(D,A,p))
+		{
+
+		//	printf("value of f: \n");
+			return true;
+		}
+		return false;
+	}
+	bool isLeft(Point2f a, Point2f b, Point2f c){
+		     return ((b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x)) > 0;
+	}
+	bool insideLine(Point2f A, Point2f B, Point2f p)
+	{
+		double f = p.x*(B.y-A.y)+p.y*(A.x-B.x)+B.x*A.y-A.x*B.y;
+		if( f <= 0 )
+		{
+		//	printf("value of f: %f \n",f);
+			return true;
+		}
+		else
+			return false;
+		return false;
+	}
+};
+class Sphere
+{
+	public:
+	double radius;
+	Point3f center,color,specularPoint, specularColor;
+	Sphere()
+	{
+		radius= 0.0;
+		center=Point3f(0,0,0);
+		color=Point3f(0,0,0);
+	}
+	Sphere(Point3f c, double rad,Point3f col)
+	{
+		radius= rad;
+		center=c;
+		color=col;
+	}
+	Sphere(Point3f c, double rad)
+	{
+		radius= rad;
+		center=c;
+		color=Point3f(1,1,1);
+	}
+	void setSpecularPoint(Point3f p,Point3f q= Point3f(1,1,1))
+	{
+		specularPoint = p;
+		specularColor = q;
+	}
+	
+	Point3f getNormal(Point3f point)
+	{
+		Point3f n=point-center;
+		n.Normalize();
+		return n;
+	}
+	bool isPointInside(Point3f Pe)
+	{
+		double c=(center-Pe)%(center-Pe)-(radius*radius);
+		
+		if(c>0)		//Point is inside the sphere 
+			return false;
+		else 	return true;
+	}
+	Point3f getColor(){	return color;}
+	
+};
+class Star
+{
+	/*
+	 * A,B,C,D,E are all named in couter clockwise direction in the same order with A in bottom left corner of star 
+	 * 
+	 */
+	public: 
+	Point2f A,B,C,D, E;
+	Star()
+	{
+		A = Point2f(10,10);
+		C = Point2f(100,100);
+		B = Point2f(100,10);
+		D = Point2f(50,130);
+		E = Point2f(10,100);
+	};
+	Star(Point2f a, Point2f b, Point2f c, Point2f d,Point2f e)
+	{
+		A = a,B=b,C=c,D=d, E=e;
+	};
+
+	// returns 1 if point c is to the left of vector AB: A ---> B
+	bool isLeft(Point2f a, Point2f b, Point2f c){
+		     return ((b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x)) > 0;
+	}
+	
+	bool isInsideStar(Point2f p)
+	{
+		// if( !insideLine(A,C,p) && insideLine(A,D,p) && !insideLine(B,D,p)&& !insideLine(E,B,p)&& insideLine(E,C,p))
+
+		if( isLeft(A,C,p) + !isLeft(A,D,p) + isLeft(B,D,p) + !isLeft(B,E,p) + !isLeft(E,C,p) >= 4)
+		{
+
+		//	printf("value of f: \n");
+			return true;
+		}
+		return false;
+
+	}
+	bool insideLine(Point2f A, Point2f B, Point2f p)
+	{
+		double f = p.x*(B.y-A.y)+p.y*(A.x-B.x)+B.x*A.y-A.x*B.y;
+		if( f <= 0 )
+		{
+		//	printf("value of f: %f \n",f);
+			return true;
+		}
+		else
+			return false;
+		return false;
+	}
+};
+
+class Blob
+{
+	public:
+		vector<Point2f> centers;
+		double R , L;
+		Blob()
+		{
+			centers.pb(Point2f(200,200));
+			centers.pb(Point2f(250,250));
+			centers.pb(Point2f(300,300));
+			centers.pb(Point2f(250,300));
+			centers.pb(Point2f(300,250));
+			centers.pb(Point2f(300,230));
+			centers.pb(Point2f(330,230));
+			centers.pb(Point2f(210,210));
+			R = 50, L = 0.15;
+		}
+		bool isInsideBlob(Point2f p)
+		{
+			return F(p)>0;
+		}
+		double F(Point2f p)
+		{
+			double dist = 0, r=0;
+			for(int i = 0;i<centers.size();i++)
+			{
+				r = sqrt((centers[i]-p)%(centers[i]-p));
+				if(r < R)
+					dist += (1-3*(r/R)*(r/R) +3*pow((r/R),4) - pow(r/R,6)); 
+				else
+					dist+=0;
+			}
+			return dist - L;
+		}
+};
+
+bool functionSine(Point2f p,double scaleXPi = 100, double translateY = 100, double scaleY = 50)
+{
+	return (p.y > translateY + scaleY*sin(p.x/scaleXPi));
+}
+
+double distanceBetweenPoints(Point3f A,Point3f B)
+{	return sqrt((A-B)%(A-B));}
+
+double distanceBetweenPoints(Point2f A,Point2f B)
+{	return sqrt((A-B)%(A-B));}
+
+void readPPM(string str)
+{ 
+	  int ch, bit, comment;
+	    FILE *fp = f;
+	    fp=fopen(str,"r");					//open PPM file for reading
+	    //fp=fopen("red.ppm","r");					//open PPM file for reading
+	    if(fp == NULL)
+	    {
+		    printf("\n File Error!\n");
+		    exit(0);
+	    }
+	    // char magic[10];	
+	    // fscanf(fp, "%s", magic);
+	    string magic;
+	    fp>>magic;
+	    if(magic[0]!='P'||magic[1]!='6')			//check the image format
+	    {
+		    printf("\n Magic file for the input file is not P6\n");
+		    exit(0);
+	    }
+	    ch=fgetc(fp);						//check for comment
+	    do {
+		    if (ch == '#');
+		    ch = fgetc(fp);
+	    } while (ch == '\n');
+	    ungetc(ch, fp);
+	    ch= fgetc(fp);
+	    while (ch == '#') 
+	    {
+		    while (fgetc(fp) != '\n') ;
+		    ch = fgetc(fp);
+	    }
+	    ungetc(ch, fp);
+	    fscanf (fp, "%d %d %d", &projectionImageWidth, &projectionImageHeight, &maxcolor);	//read image size information and maxcolor
+	    fgetc(fp);
+	    pixmap = new unsigned char[projectionImageWidth * projectionImageHeight * 3];         // Dynamic memory allocation
+	    int y, x, pixel;
+	    unsigned char red, green, blue;
+	    for(y = projectionImageHeight-1; y >= 0; y--) 
+	    {
+		    for(x = 0; x < projectionImageWidth; x++) 
+		    {
+			    fscanf(fp, "%c%c%c", &red, &green, &blue);
+			    pixel = (y * projectionImageWidth + x) * 3; 
+			    pixmap[pixel] = red;
+			    pixel++;
+			    pixmap[pixel] = green;
+			    pixel++;
+			    pixmap[pixel] = blue;
+		    }
+	    }
+	    fclose(fp);
+	    //  }  								// Close if
+
+}			
+
+// =============================================================================
+// main() Program Entry
+// =============================================================================
+int main(int argc, char *argv[]) 
+{
+
+	// Check the number of parameters
+	if (argc < 2) {
+		// Tell the user how to run the program
+		std::cout<< "Usage: " << argv[0] << " option" << std::endl;
+		/* "Usage messages" are a conventional way of telling the user
+		 * how to run a program if they enter the command incorrectly.
+		 */
+		return 1;
+	}
+	string input = argv[1];
+	int N = 4, M = N;
+	float I = 0, J = 0;
+	cout<< "input arg is : " <<input<<endl;
+	//initialize the global variables
+	width = 640;
+	height = 480;
+	pixmap = new unsigned char[width * height * 3]; 
+	if(input == "red")
+		fillColor(255,0,0);
+	else if(input == "green")
+		fillColor(0,255,0);
+	else  if(input == "blue")
+		fillColor(0,0,255);
+	else  if(input == "convex")
+	{
+
+		int r = 0,g = 0,b=0;
+		Point2f A(150,200), B(100,350),D(350,100),C(380,380);
+		ConvexQuadrilateral quad = ConvexQuadrilateral(A,B,C,D);
+		//ConvexQuadrilateral quad = ConvexQuadrilateral();
+		printf("4 points of quadrilateral are:\n");
+		print(quad.A);
+		print(quad.B);
+		print(quad.C);
+		print(quad.D);
+		for(int y = 0; y < height ; y++) {
+			for(int x = 0; x< width; x++) {
+				int i = (y * width + x) * 3; 
+				double rndx =(float)((float)(rand()%100)/(100.0));
+				double rndy=(float)((float)(rand()%100)/(100.0));
+				r = 0; b = 0;g=0;
+			int num = 0;	
+				I = x, J = y;
+				for (int p = 0; p < M; p++)
+				{
+					for (int q = 0; q < N; q++)
+					{
+						I=x+(((float)p/M)+((rndx)/M));
+						J=y+(((float)q/N)+((rndy)/N));
+				      	if( quad.isInsideQuadrilateral( Point2f(I,J) ) )
+				      	{
+				      		r+=255; b+= 0;g+=255;
+						num++;
+						//cout<<"I: "<<I<<"J: "<<J<<endl;
+					}
+				      	else
+				      	{
+				      		r += 0; b += 255;g+=0;
+				      	}
+					}
+				}
+				//cout<<"number of points inside quad: "<<num<<endl;
+				r=r/(N*M);b/=(N*M);g/=(N*M);
+				pixmap[i++] = r;
+				pixmap[i++] = g; 
+				pixmap[i] = b;     
+			}
+		}
+
+
+	}
+	else  if(input == "star")
+	{
+
+		int r = 0,g = 0,b=0;
+		Point2f A(150,50), B(450,50),C(450,350),D(300,450),E(150,350);
+		Star star = Star(A,B,C,D,E);
+		//Star star;
+		for(int y = 0; y < height ; y++) {
+			for(int x = 0; x< width; x++) {
+				int i = (y * width + x) * 3; 
+				double rndx =(float)((float)(rand()%100)/(100.0));
+				double rndy=(float)((float)(rand()%100)/(100.0));
+				r = 0; b = 0;g=0;
+				int num = 0;	
+				I = x, J = y;
+				for (int p = 0; p < M; p++)
+				{
+					for (int q = 0; q < N; q++)
+					{
+						I=x+(((float)p/M)+((rndx)/M));
+						J=y+(((float)q/N)+((rndy)/N));
+				      	if( star.isInsideStar( Point2f(I,J) ) )
+				      	{
+				      		r+=255; b+= 0;g+=255;
+						num++;
+						//cout<<"I: "<<I<<"J: "<<J<<endl;
+					}
+				      	else
+				      	{
+				      		r += 0; b += 255;g+=0;
+				      	}
+					}
+				}
+				//cout<<"number of points inside quad: "<<num<<endl;
+				r=r/(N*M);b/=(N*M);g/=(N*M);
+				pixmap[i++] = r;
+				pixmap[i++] = g; 
+				pixmap[i] = b;     
+			}
+		}
+
+
+	}
+	else  if(input == "shaded")
+	{
+
+		int r = 0,g = 0,b=0;
+		Point2f A(150,50), B(450,50),C(450,350),D(300,450),E(150,350);
+		
+		Sphere sphere(Point3f(320,240,0), 100, Point3f(0,0.5,0.5));
+		sphere.setSpecularPoint(sphere.center + Point3f(-20,-20,0));
+		for(int y = 0; y < height ; y++) {
+			for(int x = 0; x< width; x++) {
+				int i = (y * width + x) * 3; 
+				double rndx =(float)((float)(rand()%100)/(100.0));
+				double rndy=(float)((float)(rand()%100)/(100.0));
+				r = 0; b = 0;g=0;
+				int num = 0;	
+				I = x, J = y;
+				for (int p = 0; p < M; p++)
+				{
+					for (int q = 0; q < N; q++)
+					{
+						I=x+(((float)p/M)+((rndx)/M));
+						J=y+(((float)q/N)+((rndy)/N));
+						 Point3f pointP(I,J,0);
+				      	if( sphere.isPointInside(pointP) )
+				      	{
+						// shade the sphere
+						double d = distanceBetweenPoints(sphere.center, sphere.specularPoint)+sphere.radius;
+						double t = (distanceBetweenPoints(pointP,sphere.specularPoint))/(d);	
+				      		r+=255*(sphere.specularColor.x*(1-t) + t*sphere.color.x);
+						b+=255*(sphere.specularColor.y*(1-t) + t*sphere.color.y);
+						g+=255*(sphere.specularColor.z*(1-t) + t*sphere.color.z);
+						num++;
+						//cout<<"I: "<<I<<"J: "<<J<<endl;
+					}
+				      	else
+				      	{
+						// shade background
+						double t = I/width, ty = J/height;
+						Point3f bgColor1(1,0,0),bgColor2(0,0,1);
+
+				      		r += 255*((1-t)*bgColor1.x + t*bgColor2.x);
+						b += 255*((1-t)*bgColor1.y + t*bgColor2.y);
+						g += 255*((1-t)*bgColor1.z + t*bgColor2.z);
+				      	}
+					}
+				}
+				//cout<<"number of points inside quad: "<<num<<endl;
+				r=r/(N*M);b/=(N*M);g/=(N*M);
+				pixmap[i++] = r;
+				pixmap[i++] = g; 
+				pixmap[i] = b;     
+			}
+		}
+
+
+	}
+else  if(input == "function")
+	{
+		int r = 0,g = 0,b=0;
+		Point2f A(150,50), B(450,50),C(450,350),D(300,450),E(150,350);
+		// Star star = Star(A,B,C,D,E);
+		// Star star;
+		for(int y = 0; y < height ; y++) {
+			for(int x = 0; x< width; x++) {
+				int i = (y * width + x) * 3; 
+				double rndx =(float)((float)(rand()%100)/(100.0));
+				double rndy=(float)((float)(rand()%100)/(100.0));
+				r = 0; b = 0;g=0;
+				int num = 0;	
+				I = x, J = y;
+				for (int p = 0; p < M; p++)
+				{
+					for (int q = 0; q < N; q++)
+					{
+						I=x+(((float)p/M)+((rndx)/M));
+						J=y+(((float)q/N)+((rndy)/N));
+				      	if( functionSine( Point2f(I,J) ) && functionSine(Point2f(I,J),50,130,100)&& !functionSine(Point2f(I,J),50,430,100))
+				      	{
+				      		r+=255; b+= 0;g+=255;
+						num++;
+						//cout<<"I: "<<I<<"J: "<<J<<endl;
+					}
+				      	else
+				      	{
+				      		r += 0; b += 255;g+=0;
+				      	}
+					}
+				}
+				//cout<<"number of points inside quad: "<<num<<endl;
+				r=r/(N*M);b/=(N*M);g/=(N*M);
+				pixmap[i++] = r;
+				pixmap[i++] = g; 
+				pixmap[i] = b;     
+			}
+		}
+
+
+	}
+	else  if(input == "blobby")
+	{
+
+		int r = 0,g = 0,b=0;
+		Point2f A(150,50), B(450,50),C(450,350),D(300,450),E(150,350);
+		Blob blob;
+		for(int y = 0; y < height ; y++) {
+			for(int x = 0; x< width; x++) {
+				int i = (y * width + x) * 3; 
+				double rndx =(float)((float)(rand()%100)/(100.0));
+				double rndy=(float)((float)(rand()%100)/(100.0));
+				r = 0; b = 0;g=0;
+				int num = 0;	
+				I = x, J = y;
+				for (int p = 0; p < M; p++)
+				{
+					for (int q = 0; q < N; q++)
+					{
+						I=x+(((float)p/M)+((rndx)/M));
+						J=y+(((float)q/N)+((rndy)/N));
+				      	if( blob.isInsideBlob( Point2f(I,J) ) )
+				      	{
+				      		r+=74; b+= 52;g+=5;
+						num++;
+						//cout<<"I: "<<I<<"J: "<<J<<endl;
+					}
+				      	else
+				      	{
+				      		r += 0; b += 0;g+=0;
+				      	}
+					}
+				}
+				//cout<<"number of points inside quad: "<<num<<endl;
+				r=r/(N*M);b/=(N*M);g/=(N*M);
+				pixmap[i++] = r;
+				pixmap[i++] = g; 
+				pixmap[i] = b;     
+			}
+		}
+
+
+	}
+
+else  if(input == "circle")
+	{
+		double radius = 75,centerY= height/2,centerX= width/2;
+		Sphere sphere(Point3f(10,10,0), radius);
+		Sphere sphere1(Point3f(10,100,0), radius);
+		Sphere sphere2(Point3f(100,10,0), radius);
+		Sphere sphere3(Point3f(100,100,0), radius);
+		int r = 0,g = 0,b=0;
+		for(int y = 0; y < height ; y++) {
+			for(int x = 0; x< width; x++) {
+				int i = (y * width + x) * 3; 
+				// cout<<"x: "<<x<<"y: "<<y<<"i: "<<i<<endl;
+				if( sphere.isPointInside(Point3f(x,y,0)) &&  sphere1.isPointInside(Point3f(x,y,0)) &&sphere2.isPointInside(Point3f(x,y,0)) &&sphere3.isPointInside(Point3f(x,y,0)) )
+				{
+					r = 255; b = 0;g=255;
+				}
+				else
+				{
+					r = 0; b = 255;g=0;
+				}
+				pixmap[i++] = r;
+				pixmap[i++] = g; 
+				pixmap[i] = b;     
+			}
+		}
+
+	}
+	else  if(input == "random")
+	{
+		double diff = 135,centerY= height/2,centerX= width/2, radius = 30;
+		int r = 0,g = 0,b=0;
+		for(int y = 0; y < height ; y++) {
+			for(int x = 0; x< width; x++) {
+				int i = (y * width + x) * 3; 
+				// cout<<"x: "<<x<<"y: "<<y<<"i: "<<i<<endl;
+				double t = 0;
+				double distToCenter = sqrt((x-centerX)*(x- centerX) + (y-centerY)*(y-centerY)); 
+				if(distToCenter > 7*radius )
+				{
+					r = 0; b = 0;g=0;	// black (0,0,0)
+				}
+				else if(distToCenter < 7*radius && distToCenter > 6*radius )
+				{
+					t = (distToCenter - 6*radius)/radius;
+					r = 0;
+					g = 0;
+					b = 255*(1-t)+0*t;	// (0,0,1)
+				}
+				else if(distToCenter < 6*radius && distToCenter > 5*radius )
+				{
+					t = (distToCenter - 5*radius)/radius; // (0,1,0)
+					r = 0; 
+					g = 255*(1-t)+0*t;
+					b = 0*(1-t)+255*t;
+				}
+				else if(distToCenter < 5*radius && distToCenter > 4*radius )
+				{
+					t = (distToCenter - 4*radius)/radius;	// (0,1,1)
+					r  = 0; 
+					g  = 255;
+					b  = 255*(1-t)+0*t;
+				}
+				else if(distToCenter < 4*radius && distToCenter > 3*radius )
+				{
+					t = (distToCenter - 3*radius)/radius;	// (1,0,0)
+					r = 255*(1-t);
+					g = 255*t;
+					b = 255*t;
+				}
+				else if(distToCenter < 3*radius && distToCenter > 2*radius )
+				{
+					t = (distToCenter - 2*radius)/radius;	// (1,0,1)
+					r = 255;
+					g = 0;
+					b = 255*(1-t);
+				}
+				else if(distToCenter < 2*radius && distToCenter > 1*radius )
+				{
+					t = (distToCenter - 1*radius)/radius;	// (1,1,0)
+					r = 255;
+					g = 255*(1-t);
+					b = 255*t;
+				}
+				else
+				{
+					r = 255; b = 255;g=255;
+				}
+				pixmap[i++] = r;
+				pixmap[i++] = g; 
+				pixmap[i] = b;     
+			}
+		}
+
+
+	}
+	else
+	{
+		cout<<"invalid argument\n";
+		return 1;
+	}
+
+	// OpenGL Commands:
+	// Once "glutMainLoop" is executed, the program loops indefinitely to all
+	// glut functions.  
+	glutInit(&argc, argv);
+	glutInitWindowPosition(100, 100); // Where the window will display on-screen.
+	glutInitWindowSize(width, height);
+	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+	glutCreateWindow("pr01");
+	init();
+	glutReshapeFunc(windowResize);
+	glutDisplayFunc(windowDisplay);
+	glutMouseFunc(processMouse);
+	glutMainLoop();
+
+	return 0; //This line never gets reached. 
+}
+
