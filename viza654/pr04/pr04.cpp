@@ -364,6 +364,10 @@ void KmeansClusterImage(const string inputImage,int k)
 
 
 }
+double h0(double t){	return 2*t*t*t - 3*t*t + 1;}
+double h1(double t){	return (-2)*t*t*t + 3*t*t ;}
+double h2(double t){	return t*t*t - 2*t*t + t;}
+double h3(double t){	return t*t*t - t*t ;}
 
 // =============================================================================
 // main() Program Entry
@@ -405,7 +409,7 @@ int main(int argc, char *argv[])
 	}
 	else  if(input == "replace")
 	{
-		if (argc < 4) {
+		if (argc < 10) {
 			std::cout<< "Usage: " << argv[0] << " replace <input image> <R G B of src color> <R G B of dest color> <threshold>" << std::endl;
 			return 1;
 		}
@@ -432,15 +436,58 @@ int main(int argc, char *argv[])
 				
 			}
 		}
-
-
-
-
 	}
 	else  if(input == "curve")
 	{
+		if (argc < 4) {
+			std::cout<< "Usage: " << argv[0] << " curve <input image> <list of x y control points> <threshold>" << std::endl;
+			return 1;
+		}
+		string inputImage = argv[2];
+		pixmap = readPPM(inputImage);
+		int numControlPts = (argc-3)/2;
+		vector<Point2f> controlPoints;
+		// printf("number of control points: %d \n",(argc-3)/2);
+		// controlPoints.resize((argc-3)/2);
+		for(int i = 0; i <=argc-1-3;i+=2)
+		{
+			controlPoints.push_back(Point2f(atoi(argv[3+i]),atoi(argv[3+i+1])));
+		}
+		printf("number of control points: %d \n",controlPoints.size());
 
-		
+		map<int,int> Table;
+		int i=0,j=0,k=0,N=numControlPts,CY=0,pixel;
+		double t=0;
+		for(int CX=0; CX<256; CX++)
+		{
+			if (CX > controlPoints[i+1].x) 
+				i++;
+			j= (i-1); if (j<0) j=0;
+			k= (i+2); if (k>N-1) k=N-1;
+			t=(CX-controlPoints[i].x)/(controlPoints[i+1].x-controlPoints[i].x);
+			CY = controlPoints[i].y*h0(t) + 
+				controlPoints[i+1].y*h1(t) + 
+				(controlPoints[i+1].y -controlPoints[j].y)*(controlPoints[i+1].x-controlPoints[j].x)*h2(t) + 
+				(controlPoints[k].y -controlPoints[i].y)*(controlPoints[k].x-controlPoints[i].x)*h3(t);
+			if(CY < 0 ) CY = 0;
+			if(CY>255) CY = 255;
+			Table[CX] = CY;
+		}
+		for(map<int,int>::iterator iter = Table.begin(); iter!=Table.end(); iter++ )
+		{
+			// printf("value for %d is : %d\n",iter->first, iter->second);
+		}
+		for(int y = height-1; y >= 0; y--) 
+		{
+			for(int x = 0; x < width; x++) 
+			{
+				pixel = (y * width + x) * 3; 
+				pixmap[pixel] = Table[pixmap[pixel] ];
+				pixmap[pixel+1] = Table[pixmap[pixel+1] ];
+				pixmap[pixel+2] = Table[pixmap[pixel+2] ];
+			}
+		}
+
 	}	
 	else
 	{

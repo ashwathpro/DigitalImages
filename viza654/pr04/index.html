@@ -6,41 +6,92 @@
 <table border=0 cellspacing=5 cellpadding=5 width=90%>
 <tr>
 <td align=center>
-<b><font size=6>Project 03: Read/Display & Write Images<br></font>
+<b><font size=6>Project 04: Image Manipulations<br></font>
 <b><font size=5>Ashwath Rajendran <br></font>
 </td>
 
 <td align=center>
-<font size=3><a href = "pr03.cpp">CPP file</a><br></font>
+<font size=3><a href = "pr04.cpp">CPP file</a><br></font>
 <font size=3><a href = "Makefile">Make file</a> <br></font>
 </td>
-blue_ white: ash@ash-laptop:~/code/DigitalImages/viza654/pr04$ ./pr04 replace colors.ppm 4 4 60 255 255 255 30
-white_black: ash@ash-laptop:~/code/DigitalImages/viza654/pr04$ ./pr04 replace colors.ppm 255 255 255 0 0 0 30
-
-ash@ash-laptop:~/code/DigitalImages/viza654/pr04$ ./pr04 reduce rainbow.ppm 5
-ash@ash-laptop:~/code/DigitalImages/viza654/pr04$ ./pr04 reduce rainbow.ppm 20
 
 </tr> 
 <tr>
 <td align=center>
 <font size=4>
 <img src=lena.png width=400><br>
-Original P6 Image </td>
+Original Image </td>
 <td align=center>
 <font size=4>
-<img src=lena_p6.png width=400><br>
-Input argument : ./pr03 lena.ppm
+<img src=lenaCurve.png width=400><br>
+./pr04 curve lena.ppm 0 0 63 128 160 75 255 255
+ (option followed by a list of control points' x and y coordinates)
 </td>
 </tr>
- <tr>
+
+<tr>
 <td align=center>
 <font size=4>
-<img src=lena-grey.png width=400><br>
-Original P5 Image </td>
+<img src=lena.png width=400><br>
+Original Image </td>
 <td align=center>
 <font size=4>
-<img src=lena_errorP5.png width=400><br>
-Error displaying P5 images... still working on it
+<img src=lenaCurve1.png width=400><br>
+Input argument : ./pr04 curve lena.ppm 0 100 63 128 100 175 255 255
+</td>
+</tr>
+<tr>
+
+
+<td align=center>
+<font size=4>
+<img src=rainbow.png width=400><br>
+Original rainbow image </td>
+<td align=center>
+<font size=4>
+<img src=rainbow5.png width=400><br>
+Input argument : ./pr04 reduce rainbow.ppm 5
+ Reduced image with only 5 colors
+</td>
+</tr> 
+
+
+<td align=center>
+<font size=4>
+<img src=rainbow.png width=400><br>
+Original Image </td>
+<td align=center>
+<font size=4>
+<img src=rainbow20.png width=400><br>
+Input argument : ./pr04 reduce rainbow.ppm 20
+ Reduced image with only 20 colors
+</td>
+</tr> 
+
+
+
+<td align=center>
+<font size=4>
+<img src=colors.png width=400><br>
+Original image </td>
+<td align=center>
+<font size=4>
+<img src=colors_blue_white.png width=400><br>
+Input Argument: ./pr04 replace colors.ppm 4 4 60 255 255 255 30 (source color, destination color and tolerance value)
+ Tries to replace the specified blue color to white
+</td>
+</tr> 
+
+
+<td align=center>
+<font size=4>
+<img src=colors.png width=400><br>
+Original Image </td>
+<td align=center>
+<font size=4>
+<img src=colors_white_black.png width=400><br>
+Input Argument:  ./pr04 replace colors.ppm 255 255 255 0 0 0 30
+ Tries to replace all white color with black
 </td>
 </tr> 
 
