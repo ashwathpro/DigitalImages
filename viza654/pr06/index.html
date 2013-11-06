@@ -6,13 +6,14 @@
 <table border=0 cellspacing=5 cellpadding=5 width=90%>
 <tr>
 <td align=center>
-<b><font size=6>Project 05: Filters<br></font>
+<b><font size=6>Project 06: Compositing Operations<br></font>
 <b><font size=5>Ashwath Rajendran <br></font>
 </td>
 
 <td align=center>
-<font size=3><a href = "pr05.cpp">CPP file</a><br></font>
+<font size=3><a href = "pr06.cpp">CPP file</a><br></font>
 <font size=3><a href = "Makefile">Make file</a> <br></font>
+<font size=3><a href = "https://github.com/ashwathpro/DigitalImages/tree/master/viza654/pr06">All the code</a> <br></font>
 </td>
 
 </tr> 
@@ -20,33 +21,12 @@
 <tr>
 <td align=center>
 <font size=4>
-<img src=lambo.jpg width=400><br>
-Original Image<br><br><br><br><br> </td>
+<img src=android-survey.gif width=400><br>
+Original Foreground Image </td>
 <td align=center>
 <font size=4>
-<img src=motionBlur.png width=400><br>
-./pr05 blur Lamborghini-Murcielago.ppm 0.35 (change filterSize = 20)
-Motion blur effect on a stationary car at an angle of 0.35 radians. Used a 20x20 Gaussian blur kernel to get this!
-Gaussian Filter 5x5 = [ <br>
-0.087294 0.096144 0.044476 0.000664 0.000075 <br>
-0.020728 0.088621 0.080714 0.014229 0.001040 <br>
-0.024805 0.038242 0.092586 0.059855 0.007462 <br>
-0.000362 0.034048 0.084256 0.090498 0.012934 <br>
-0.000449 0.002724 0.020375 0.067539 0.029877 ]
-
-</td>
-</tr>
-
-<tr>
-<td align=center>
-<font size=4>
-<img src=lena.png width=400><br>
-Original Image </td>
-<td align=center>
-<font size=4>
-<img src=motionBlur_a45.png width=400><br>
-Input argument : ./pr05 blur lena.ppm -0.75 
-Motion blur effect at an angle of -0.75 radians (-45 degrees). User can input any angle to get the directional blur
+<img src=apple-black-logo-wallpaper.jpg width=400><br>
+Original Background Image
 </td>
 </tr>
 
@@ -54,33 +34,17 @@ Motion blur effect at an angle of -0.75 radians (-45 degrees). User can input an
 <tr>
 <td align=center>
 <font size=4>
-<img src=lena.png width=400><br>
-Original Image </td>
+<img src=over_green.png width=400><br>
+Android's green color is used as a screen,alpha value is removed based on the green region! <br>
+Just calculating alpha was not enough! In order to have a smooth boundary, I had to perform the imopen operation (Erodes an image and then dilates the eroded image) <br>
+command: ./pr06 over apple-black-logo-wallpaper.ppm android-survey.ppm 60 95 0 0.99 0 1
+ </td>
 <td align=center>
 <font size=4>
-<img src=GaussianBlur_50x50_a1.png width=400><br>
-Input argument : ./pr05 blur lena.ppm 1 
-Gaussian blur normal (S0 = S1) at an angle of 1 radian.
-</td>
-</tr>
-
-<tr>
-<td align=center>
-<font size=4>
-<img src=lambo.jpg width=400><br>
-Original Image <br><br><br><br></td>
-<td align=center>
-<font size=4>
-<img src=lambo_emboss1.png width=400><br>
-./pr05 emboss Lamborghini-Murcielago.ppm 0.75 (D = 1, filterSize = 5x5)
-Emboss effect on a car at an angle of 0.75 radians.
-Emboss Filter 5x5 = [ <br>
--0.500000 -0.500000 0.000000 0.000000 0.000000 <br>
--0.500000 0.000000 0.000000 0.000000 0.150000 <br>
-0.000000 0.000000 0.000000 0.150000 0.150000 <br>
-0.000000 0.000000 0.150000 0.150000 0.150000 <br>
-0.000000 0.150000 0.150000 0.150000 0.150000 ]
-
+<img src=over_green1.png width=400><br>
+Same as previous. The parameters for alpha calculation are <br> 
+min_hue=60 max_hue=95 min_saturation=0 max_saturation=0.99 min_value=0 max_value=1 
+command: ./pr06 over ws-space-apple-logo1.ppm android-survey.ppm 60 95 0 0.99 0 1
 </td>
 </tr>
 
@@ -88,48 +52,15 @@ Emboss Filter 5x5 = [ <br>
 <tr>
 <td align=center>
 <font size=4>
-<img src=lena.png width=400><br>
-Original Image </td>
+<img src=over05.png width=400><br>
+Over(Normal) operation with alpha = 0.5 <br>
+command: ./pr06 normal apple-black-logo-wallpaper.ppm android-survey.ppm 0.5
+ </td>
 <td align=center>
 <font size=4>
-<img src=lena_emboss.png width=400><br>
-./pr05 emboss lena.ppm 0.75 (D = 1, filterSize = 5x5)
-Emboss effect at an angle of 0.75 radians.
-</td>
-</tr>
-<tr>
-<td align=center>
-<font size=4>
-<img src=lambo.jpg width=400><br>
-Original Image </td>
-<td align=center>
-<font size=4>
-<img src=edgeDetect.png width=400><br>
-./pr05 edge Lamborghini-Murcielago.ppm
-Edge detection: 
-Edge detection Filter 3x3 = [ <br>
--1,-1,-1 <br>
--1,+8,-1 <br>
--1,-1,-1 ]
-
-</td>
-</tr>
-
-<tr>
-<td align=center>
-<font size=4>
-<img src=box.jpg width=400><br>
-Original Image </td>
-<td align=center>
-<font size=4>
-<img src=edge_box.png width=400><br>
-./pr05 edge box.ppm
-Edge detection: 
-Edge detection Filter 3x3 = [ <br>
--1,-1,-1 <br>
--1,+8,-1 <br>
--1,-1,-1 ]
-
+<img src=over08.png width=400><br>
+Over(Normal) operation with alpha = 0.8 <br>
+command: ./pr06 normal apple-black-logo-wallpaper.ppm android-survey.ppm 0.8
 </td>
 </tr>
 
@@ -137,20 +68,27 @@ Edge detection Filter 3x3 = [ <br>
 <tr>
 <td align=center>
 <font size=4>
-<img src=dotsgridmini.jpg width=400><br>
-Original Image<br><br><br><br><br><br><br> </td>
+<img src=BingWallpaper-2013-11-04.jpg width=400><br>
+Original Background Image1 </td>
 <td align=center>
 <font size=4>
-<img src=dilate.png width=400><br>
-./pr05 edge dotsgridmini.ppm
-Dilate: Used a disk filter that magnifies circular dots 
-Dilate Disk Filter 7x7 = {	{0,0,0,1,0,0,0},<br>
-							{0,0,1,1,1,0,0},<br>
-							{0,1,1,1,1,1,0},<br>
-							{1,1,1,1,1,1,1},<br>
-							{0,1,1,1,1,1,0},<br>
-							{0,0,1,1,1,0,0},<br>
-							{0,0,0,1,0,0,0}, }
+<img src=BingWallpaper-2013-11-02.jpg width=400><br>
+Original Foreground Image2
+</td>
+</tr>
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=subtract1.png width=400><br>
+Subtract operation<br>
+command: ./pr06 subtract bingImg1.ppm bingImg2.ppm 
+ </td>
+<td align=center>
+<font size=4>
+<img src=difference.png width=400><br>
+Difference operation <br>
+command: ./pr06 difference bingImg1.ppm bingImg2.ppm
 </td>
 </tr>
 
@@ -158,86 +96,50 @@ Dilate Disk Filter 7x7 = {	{0,0,0,1,0,0,0},<br>
 <tr>
 <td align=center>
 <font size=4>
-<img src=dotsgridmini.jpg width=400><br>
-Original Image <br><br><br><br><br><br><br></td>
+<img src=min.png width=400><br>
+Min operation<br>
+command: ./pr06 min bingImg1.ppm bingImg2.ppm 
+ </td>
 <td align=center>
 <font size=4>
-<img src=erode.png width=400><br>
-./pr05 edge dotsgridmini.ppm<br>
-Erode: Used a disk filter that removes circular dots that are noise in the image
-Erode Disk Filter 7x7 = {	{0,0,0,1,0,0,0},<br>
-							{0,0,1,1,1,0,0},<br>
-							{0,1,1,1,1,1,0},<br>
-							{1,1,1,1,1,1,1},<br>
-							{0,1,1,1,1,1,0},<br>
-							{0,0,1,1,1,0,0},<br>
-							{0,0,0,1,0,0,0}, }
-</td>
-</tr>
-
-
-<tr>
-<td align=center>
-<font size=4>
-<img src=lambo.jpg width=400><br>
-Original Image<br><br><br><br><br><br><br> </td>
-<td align=center>
-<font size=4>
-<img src=Ldilate.png width=400><br>
-./pr05 edge Lamborghini-Murcielago.ppm
-Dilate: Used a disk filter that magnifies circular dots 
-Dilate Disk Filter 7x7 = {	{0,0,0,1,0,0,0},<br>
-							{0,0,1,1,1,0,0},<br>
-							{0,1,1,1,1,1,0},<br>
-							{1,1,1,1,1,1,1},<br>
-							{0,1,1,1,1,1,0},<br>
-							{0,0,1,1,1,0,0},<br>
-							{0,0,0,1,0,0,0}, }
-</td>
-</tr>
-
-
-<tr>
-<td align=center>
-<font size=4>
-<img src=lambo.jpg width=400><br>
-Original Image <br><br><br><br><br><br><br></td>
-<td align=center>
-<font size=4>
-<img src=Lerode.png width=400><br>
-./pr05 edge Lamborghini-Murcielago<br>
-Erode: Used a disk filter that removes circular dots that are noise in the image
-Erode Disk Filter 7x7 = {	{0,0,0,1,0,0,0},<br>
-							{0,0,1,1,1,0,0},<br>
-							{0,1,1,1,1,1,0},<br>
-							{1,1,1,1,1,1,1},<br>
-							{0,1,1,1,1,1,0},<br>
-							{0,0,1,1,1,0,0},<br>
-							{0,0,0,1,0,0,0}, }
+<img src=max.png width=400><br>
+Max operation <br>
+command: ./pr06 max bingImg1.ppm bingImg2.ppm 
 </td>
 </tr>
 
 
 
-
-
 <tr>
 <td align=center>
 <font size=4>
-<img src=rainbow.jpg width=400><br>
-Rainbow Original</td>
+<img src=addition.png width=400><br>
+Addition operation<br>
+command: ./pr06 addition bingImg1.ppm bingImg2.ppm 
+ </td>
 <td align=center>
 <font size=4>
-<img src=rainbow_101filter.png width=400><br>
-Rainbow colors after blur effect from a 101x101 gaussian blur kernel at 0 degree angle!</td>
-</tr> 
-
-<tr>
-<td align=center>
-<font size=4>
-<img src=mis.png width=400><br>
-Mistake while doing emboss </td>
+<img src=multiply.png width=400><br>
+Multiply operation <br>
+command: ./pr06 multiply bingImg1.ppm bingImg2.ppm 
+</td>
 </tr>
+
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=error_over.png width=400><br>
+Mistakes while doing over operation
+ </td>
+<td align=center>
+<font size=4>
+<img src=abs_error.png width=400><br>
+Error due to absolute value
+</td>
+</tr>
+
 
 </table>
 </center>
