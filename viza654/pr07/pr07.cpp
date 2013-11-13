@@ -789,7 +789,143 @@ int main(int argc, char *argv[])
 	//exit(0);
 		
 	}
-	else if(input == "over")
+	else if(input == "translate")
+	{
+		if (argc < 5) {
+			std::cout<< "Usage: " << argv[0] << " scale <image> <tx> <ty>"  << std::endl;
+			return 1;
+		}
+
+
+		string Image = argv[2];
+		double tx=atof(argv[3]);
+		double ty=atof(argv[4]);
+		cout<<"scale x,y: "<<tx<<", "<<ty<<endl;
+
+		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
+
+		width = widthFore;
+		height = heightFore;
+
+		printf("W %d, H %d\n", width ,height);
+		double trans[3][3]={
+			{1 , 0, tx},
+			{0 , 1, ty},
+			{0 , 0,  1}
+		};
+		double transInverse[3][3] ={
+			{1 , 0, -tx},
+			{0 , 1, -ty},
+			{0 , 0,  1}
+		}; 
+		copyMatToTrans(trans);
+		copyMatToTransInv(transInverse);
+
+        // calculating new width and height
+        int maxWidth = INT_MIN,minWidth=INT_MAX,maxHeight=INT_MIN,minHeight=INT_MAX;
+        /*
+	for(int y=height-1;y>=0;y--){
+			for(int x=0;x<width;x++){
+				Point2f point=transPoint(x,y);
+			if (point.x > maxWidth) maxWidth = point.x;
+      			if (point.y > maxHeight) maxHeight = point.y;
+      			if (point.x < minWidth) minWidth = point.x;
+      			if (point.y < minHeight) minHeight = point.y;
+      			
+      		}
+      	}
+	*/
+	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
+	// int offsetWidth = abs(minWidth), offsetHeight = abs(minHeight);
+	maxWidth = width + abs(tx);
+	minWidth = 0;
+	maxHeight = height + abs(ty);
+	minHeight = 0;
+	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
+	pixmap = new unsigned char[maxWidth*maxHeight*3];
+
+	// Actual translation
+	for(int y=maxHeight-1;y>=0;y--){
+		for(int x=0;x<maxWidth;x++){
+				Point2f point=transInvPoint(x,y);
+				int pixel = ( (y) * maxWidth + (x)) * 3; 
+				if(point.x >= width || point.x < 0 || point.y >= height || point.y < 0)
+				{
+					// set color as black
+					pixmap[pixel]   = 255; 
+					pixmap[pixel+1] = 255;
+					pixmap[pixel+2] = 255;
+				}
+				else
+				{
+					int pixelInput = ((int)point.y * width + (int)point.x)*3;
+					pixmap[pixel]   = pixmapInput[pixelInput];
+                                        pixmap[pixel+1] = pixmapInput[pixelInput+1];
+				        pixmap[pixel+2] = pixmapInput[pixelInput+2];
+				}
+		}
+	}
+
+	width = maxWidth;
+	height= maxHeight;
+
+	//exit(0);
+		
+	}
+	else if(input == "mirror")
+	{
+		// mirror along y axis
+		if (argc < 3) {
+			std::cout<< "Usage: " << argv[0] << " mirror <image>"  << std::endl;
+			return 1;
+		}
+
+
+		string Image = argv[2];
+		double tx=atof(argv[3]);
+		double ty=atof(argv[4]);
+		cout<<"scale x,y: "<<tx<<", "<<ty<<endl;
+
+        int maxWidth = INT_MIN,minWidth=INT_MAX,maxHeight=INT_MIN,minHeight=INT_MAX;
+		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
+
+		width = widthFore;
+		height = heightFore;
+	maxWidth = width;
+	minWidth = 0;
+	maxHeight = height;
+	minHeight = 0;
+	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
+	pixmap = new unsigned char[maxWidth*maxHeight*3];
+
+	// Actual translation
+	for(int y=maxHeight-1;y>=0;y--){
+		for(int x=0;x<maxWidth;x++){
+				Point2f point=transInvPoint(x,y);
+				int pixel = ( (y) * maxWidth + (x)) * 3; 
+				if(point.x >= width || point.x < 0 || point.y >= height || point.y < 0)
+				{
+					// set color as black
+					pixmap[pixel]   = 255; 
+					pixmap[pixel+1] = 255;
+					pixmap[pixel+2] = 255;
+				}
+				else
+				{
+					int pixelInput = ((int)y * width + width - (int)x)*3;
+					pixmap[pixel]   = pixmapInput[pixelInput];
+                                        pixmap[pixel+1] = pixmapInput[pixelInput+1];
+				        pixmap[pixel+2] = pixmapInput[pixelInput+2];
+				}
+		}
+	}
+
+	width = maxWidth;
+	height= maxHeight;
+
+	//exit(0);
+		
+	}else if(input == "over")
 	{
 		if (argc < 9) {
 			std::cout<< "Usage: " << argv[0] << " over <background image> <foreground or masking image2> min_hue max_hue min_saturation max_saturation min_value max_value"  << std::endl;
