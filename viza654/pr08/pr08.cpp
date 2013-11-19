@@ -643,16 +643,15 @@ int main(int argc, char *argv[])
 		width = widthFore; height = heightFore;
 		unsigned char* pixmapRet = new unsigned char[width * height * 3]; 
 		printf("W %d, H %d\n", width ,height);
-		int level = numToReduce;
-		int step = 255 / level;
+		int step = 255 / numToReduce;
 		// cout<<step<<endl<<round(200*1.0/255*3)*step<<endl;
 		for(int y=height-1;y>=0;y--){
 			for(int x=0;x<width;x++){
 				
 				int pixel = ( y * width + x) * 3; 
-				pixmapRet[pixel]  = round(pixmapInput[pixel]*1.0/255*level)*step   ;
-				pixmapRet[pixel+1]= round(pixmapInput[pixel+1]*1.0/255*level)*step ;
-				pixmapRet[pixel+2]= round(pixmapInput[pixel+2]*1.0/255*level)*step ;
+				pixmapRet[pixel]  = round(pixmapInput[pixel]*1.0/255*numToReduce)*step   ;
+				pixmapRet[pixel+1]= round(pixmapInput[pixel+1]*1.0/255*numToReduce)*step ;
+				pixmapRet[pixel+2]= round(pixmapInput[pixel+2]*1.0/255*numToReduce)*step ;
 				double errRed  = abs(pixmapInput[pixel] - pixmapRet[pixel]);
 				double errBlue = abs(pixmapInput[pixel+1] - pixmapRet[pixel+1]);
 				double errGreen= abs(pixmapInput[pixel+2] - pixmapRet[pixel+2]);
@@ -719,8 +718,7 @@ int main(int argc, char *argv[])
 		width = widthFore; height = heightFore;
 		unsigned char* pixmapRet = new unsigned char[width * height * 3]; 
 		printf("W %d, H %d\n", width ,height);
-		int level = numToReduce;
-		int step = 255 / level;
+		int step = 255 / numToReduce;
 		// cout<<step<<endl<<round(200*1.0/255*3)*step<<endl;
 		for(int y=height-1;y>=0;y--){
 			for(int x=0;x<width;x++){
@@ -729,9 +727,9 @@ int main(int argc, char *argv[])
 				pixmapInput[pixel]  +=  ((float)((float)(rand()%100)/(100.0)) - 0.5)*step;
 				pixmapInput[pixel+1]+=  ((float)((float)(rand()%100)/(100.0)) - 0.5)*step;		
 				pixmapInput[pixel+2]+=  ((float)((float)(rand()%100)/(100.0)) - 0.5)*step;
-				pixmapRet[pixel]  = round(pixmapInput[pixel]  *1.0/255*level)*step   ;
-				pixmapRet[pixel+1]= round(pixmapInput[pixel+1]*1.0/255*level)*step ;
-				pixmapRet[pixel+2]= round(pixmapInput[pixel+2]*1.0/255*level)*step ;
+				pixmapRet[pixel]  = round(pixmapInput[pixel]  *1.0/255*numToReduce)*step   ;
+				pixmapRet[pixel+1]= round(pixmapInput[pixel+1]*1.0/255*numToReduce)*step ;
+				pixmapRet[pixel+2]= round(pixmapInput[pixel+2]*1.0/255*numToReduce)*step ;
 				double errRed  = abs(pixmapInput[pixel] - pixmapRet[pixel]);
 				double errBlue = abs(pixmapInput[pixel+1] - pixmapRet[pixel+1]);
 				double errGreen= abs(pixmapInput[pixel+2] - pixmapRet[pixel+2]);
@@ -793,16 +791,15 @@ int main(int argc, char *argv[])
 		width = widthFore; height = heightFore;
 		unsigned char* pixmapRet = new unsigned char[width * height * 3]; 
 		printf("W %d, H %d\n", width ,height);
-		int level = numToReduce;
-		int step = 255 / level;
+		int step = 255 / numToReduce;
 		// cout<<step<<endl<<round(200*1.0/255*3)*step<<endl;
 		for(int y=height-1;y>=0;y--){
 			for(int x=0;x<width;x++){
 				
 				int pixel = ( y * width + x) * 3; 
-				pixmapRet[pixel]  = round(pixmapInput[pixel]*1.0/255*level)*step   ;
-				pixmapRet[pixel+1]= round(pixmapInput[pixel+1]*1.0/255*level)*step ;
-				pixmapRet[pixel+2]= round(pixmapInput[pixel+2]*1.0/255*level)*step ;
+				pixmapRet[pixel]  = round(pixmapInput[pixel]*1.0/255*numToReduce)*step   ;
+				pixmapRet[pixel+1]= round(pixmapInput[pixel+1]*1.0/255*numToReduce)*step ;
+				pixmapRet[pixel+2]= round(pixmapInput[pixel+2]*1.0/255*numToReduce)*step ;
 				double errRed  = abs(pixmapInput[pixel] - pixmapRet[pixel]);
 				double errBlue = abs(pixmapInput[pixel+1] - pixmapRet[pixel+1]);
 				double errGreen= abs(pixmapInput[pixel+2] - pixmapRet[pixel+2]);

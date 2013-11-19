@@ -1,0 +1,147 @@
+<head>
+<title>Viza654 - Digital Image</title>
+</head>
+<body text="#FFFFFF" bgcolor="#050505">
+<center>
+<table border=0 cellspacing=5 cellpadding=5 width=90%>
+<tr>
+<td align=center>
+<b><font size=6>Project 06: Compositing Operations<br></font>
+<b><font size=5>Ashwath Rajendran <br></font>
+</td>
+
+<td align=center>
+<font size=3><a href = "pr05.cpp">CPP file</a><br></font>
+<font size=3><a href = "Makefile">Make file</a> <br></font>
+<font size=3><a href = "https://github.com/ashwathpro/DigitalImages/tree/master/viza654/pr06">All the code</a> <br></font>
+</td>
+
+</tr> 
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=android-survey.gif width=400><br>
+Original Foreground Image </td>
+<td align=center>
+<font size=4>
+<img src=apple-black-logo-wallpaper.jpg width=400><br>
+Original Background Image
+</td>
+</tr>
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=over_green.png width=400><br>
+Android's green color is used as a screen,alpha value is removed based on the green region! <br>
+Just calculating alpha was not enough! In order to have a smooth boundary, I had to perform the imopen operation (Erodes an image and then dilates the eroded image) <br>
+command: ./pr06 over apple-black-logo-wallpaper.ppm android-survey.ppm 60 95 0 0.99 0 1
+ </td>
+<td align=center>
+<font size=4>
+<img src=over_green1.png width=400><br>
+Same as previous. The parameters for alpha calculation are <br> 
+min_hue=60 max_hue=95 min_saturation=0 max_saturation=0.99 min_value=0 max_value=1 
+command: ./pr06 over ws-space-apple-logo1.ppm android-survey.ppm 60 95 0 0.99 0 1
+</td>
+</tr>
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=over05.png width=400><br>
+Over(Normal) operation with alpha = 0.5 <br>
+command: ./pr06 normal apple-black-logo-wallpaper.ppm android-survey.ppm 0.5
+ </td>
+<td align=center>
+<font size=4>
+<img src=over08.png width=400><br>
+Over(Normal) operation with alpha = 0.8 <br>
+command: ./pr06 normal apple-black-logo-wallpaper.ppm android-survey.ppm 0.8
+</td>
+</tr>
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=BingWallpaper-2013-11-04.jpg width=400><br>
+Original Background Image1 </td>
+<td align=center>
+<font size=4>
+<img src=BingWallpaper-2013-11-02.jpg width=400><br>
+Original Foreground Image2
+</td>
+</tr>
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=subtract1.png width=400><br>
+Subtract operation<br>
+command: ./pr06 subtract bingImg1.ppm bingImg2.ppm 
+ </td>
+<td align=center>
+<font size=4>
+<img src=difference.png width=400><br>
+Difference operation <br>
+command: ./pr06 difference bingImg1.ppm bingImg2.ppm
+</td>
+</tr>
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=min.png width=400><br>
+Min operation<br>
+command: ./pr06 min bingImg1.ppm bingImg2.ppm 
+ </td>
+<td align=center>
+<font size=4>
+<img src=max.png width=400><br>
+Max operation <br>
+command: ./pr06 max bingImg1.ppm bingImg2.ppm 
+</td>
+</tr>
+
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=addition.png width=400><br>
+Addition operation<br>
+command: ./pr06 addition bingImg1.ppm bingImg2.ppm 
+ </td>
+<td align=center>
+<font size=4>
+<img src=multiply.png width=400><br>
+Multiply operation <br>
+command: ./pr06 multiply bingImg1.ppm bingImg2.ppm 
+</td>
+</tr>
+
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=error_over.png width=400><br>
+Mistakes while doing over operation
+ </td>
+<td align=center>
+<font size=4>
+<img src=abs_error.png width=400><br>
+Error due to absolute value
+</td>
+</tr>
+
+
+</table>
+</center>
+</body>
+</html>
