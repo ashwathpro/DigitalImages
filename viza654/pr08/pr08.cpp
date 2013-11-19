@@ -1,10 +1,10 @@
 // =============================================================================
 // VIZA654/CSCE646 at Texas A&M University
-// Project 7
+// Project 8
 // Created by Ashwath Rajendran 
 // This file is supplied with an associated makefile. Put both files in the same
 // directory, navigate to that directory from the Linux shell, and type 'make'.
-// This will create a program called 'pr07' that you can run by entering
+// This will create a program called 'pr08' that you can run by entering
 // =============================================================================
 
 #include <cstdlib>
@@ -33,7 +33,6 @@ using namespace cy;
 using namespace std;
 #define print(p) printf("(%f,%f) \n",p.x,p.y);
 #define pb(a) push_back(a)
-#define PIXEL(x,y) (y * width + x) * 3
 
 // =============================================================================
 // These variables will store the input ppm image's width, height, and color
@@ -42,6 +41,9 @@ int width, height, maxcolor=255;
 unsigned char *pixmap;
 
 
+int PIXEL(int x,int y) {
+	return (y * width + x) * 3;
+}
 
 // =============================================================================
 // OpenGL Display and Mouse Processing Functions.
@@ -602,7 +604,8 @@ Point2f transInvPoint(double x, double y)
         }
     return Point2f(product[0][0],product[1][0]);
 }
-
+int numToReduce = 8;
+	
 // =============================================================================
 // main() Program Entry
 // =============================================================================
@@ -625,438 +628,223 @@ int main(int argc, char *argv[])
 	width = 640;
 	height = 480;
 	pixmap = new unsigned char[width * height * 3]; 
-	if(input == "rotation")
+	if(input == "floyd")
 	{
-		if (argc < 4) {
-			std::cout<< "Usage: " << argv[0] << " rotation <image> <angle>"  << std::endl;
+		if (argc < 2) {
+			std::cout<< "Usage: " << argv[0] << " floyd <image> [numToReduce]"  << std::endl;
 			return 1;
 		}
 
 
 		string Image = argv[2];
-		double angle=atof(argv[3]);
-		cout<<"angle of rotation: "<<angle<<endl;
+		if(argc == 4)	numToReduce=atof(argv[3]);
 
 		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
-		unsigned char* pixmapRet; // = new unsigned char[width * height * 3]; 
-
-		width = widthFore;
-		height = heightFore;
-
+		width = widthFore; height = heightFore;
+		unsigned char* pixmapRet = new unsigned char[width * height * 3]; 
 		printf("W %d, H %d\n", width ,height);
-		double trans[3][3]={
-			{cos(angle),sin(angle), 0},
-			{-1*sin(angle),cos(angle),0},
-			{0,0,1}
-		};
-		double transInverse[3][3] ={
-			{cos(angle),-1*sin(angle), 0},
-			{sin(angle), cos(angle), 0},
-			{0,0,1}
-		}; 
-		copyMatToTrans(trans);
-		copyMatToTransInv(transInverse);
-
-        // calculating new width and height
-        int maxWidth = INT_MIN,minWidth=INT_MAX,maxHeight=INT_MIN,minHeight=INT_MAX;
-        for(int y=height-1;y>=0;y--){
+		int level = numToReduce;
+		int step = 255 / level;
+		// cout<<step<<endl<<round(200*1.0/255*3)*step<<endl;
+		for(int y=height-1;y>=0;y--){
 			for(int x=0;x<width;x++){
-				Point2f point=transPoint(x,y);
-			if (point.x > maxWidth) maxWidth = point.x;
-      			if (point.y > maxHeight) maxHeight = point.y;
-      			if (point.x < minWidth) minWidth = point.x;
-      			if (point.y < minHeight) minHeight = point.y;
-      			
-      		}
-      	}
-	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
-	int offsetWidth = abs(minWidth), offsetHeight = abs(minHeight);
-	maxWidth = maxWidth-minWidth;
-	minWidth = minWidth-minWidth;
-	maxHeight = maxHeight-minHeight;
-	minHeight = minHeight-minHeight;
-	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
-	pixmap = new unsigned char[maxWidth*maxHeight*3];
+				
+				int pixel = ( y * width + x) * 3; 
+				pixmapRet[pixel]  = round(pixmapInput[pixel]*1.0/255*level)*step   ;
+				pixmapRet[pixel+1]= round(pixmapInput[pixel+1]*1.0/255*level)*step ;
+				pixmapRet[pixel+2]= round(pixmapInput[pixel+2]*1.0/255*level)*step ;
+				double errRed  = abs(pixmapInput[pixel] - pixmapRet[pixel]);
+				double errBlue = abs(pixmapInput[pixel+1] - pixmapRet[pixel+1]);
+				double errGreen= abs(pixmapInput[pixel+2] - pixmapRet[pixel+2]);
 
-	// Actual rotation
-	for(int y=maxHeight-1-offsetHeight;y>=0-offsetHeight;y--){
-		for(int x=-offsetWidth;x<maxWidth-offsetWidth;x++){
-				Point2f point=transInvPoint(x,y);
-				int pixel = ( (y+offsetHeight) * maxWidth + (x+offsetWidth)) * 3; 
-				if(point.x >= width || point.x < 0 || point.y >= height || point.y < 0)
+
+				//printf("W %d, H %d\n",PIXEL(x+1,y),height);
+				//*
+				if(x+1 < width )		
 				{
-					// set color as black
-					pixmap[pixel]   = 0; 
-					pixmap[pixel+1] = 0;
-					pixmap[pixel+2] = 0;
+					pixmapInput[PIXEL(x+1,y)]  =min(pixmapInput[PIXEL(x+1,y)]+(int)(errRed*7/16.0),255);
+					pixmapInput[PIXEL(x+1,y)+1]=min(pixmapInput[PIXEL(x+1,y)+1]+(int)(errGreen*7/16.0),255);
+					pixmapInput[PIXEL(x+1,y)+2]=min(pixmapInput[PIXEL(x+1,y)+2]+(int)(errBlue*7/16.0),255);
 				}
-				else
+				if(y-1 >= 0)			
 				{
-					int pixelInput = ((int)point.y * width + (int)point.x)*3;
-					pixmap[pixel]   = pixmapInput[pixelInput];
-                                        pixmap[pixel+1] = pixmapInput[pixelInput+1];
-				        pixmap[pixel+2] = pixmapInput[pixelInput+2];
+					pixmapInput[PIXEL(x,y-1)]  =min(pixmapInput[PIXEL(x,y-1)]+(int)(errRed*5/16.0),255);    
+					pixmapInput[PIXEL(x,y-1)+1]=min(pixmapInput[PIXEL(x,y-1)+1]+(int)(errGreen*5/16.0),255);
+					pixmapInput[PIXEL(x,y-1)+2]=min(pixmapInput[PIXEL(x,y-1)+2]+(int)(errBlue*5/16.0),255); 
 				}
-		}
-	}
-
-	width = maxWidth;
-	height= maxHeight;
-
-	//exit(0);
-		
-	}
-	else if(input == "scale")
-	{
-		if (argc < 5) {
-			std::cout<< "Usage: " << argv[0] << " scale <image> <sx> <sy>"  << std::endl;
-			return 1;
-		}
-
-
-		string Image = argv[2];
-		double sx=atof(argv[3]);
-		double sy=atof(argv[4]);
-		cout<<"scale x,y: "<<sx<<", "<<sy<<endl;
-
-		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
-
-		width = widthFore;
-		height = heightFore;
-
-		printf("W %d, H %d\n", width ,height);
-		double trans[3][3]={
-			{sx, 0, 0},
-			{0 ,sy, 0},
-			{0 , 0, 1}
-		};
-		double transInverse[3][3] ={
-			{1.0/sx, 0, 0},
-			{0 ,1.0/sy, 0},
-			{0 , 0, 1}
-		}; 
-		copyMatToTrans(trans);
-		copyMatToTransInv(transInverse);
-
-        // calculating new width and height
-        int maxWidth = INT_MIN,minWidth=INT_MAX,maxHeight=INT_MIN,minHeight=INT_MAX;
-        /*
-	 * for(int y=height-1;y>=0;y--){
-			for(int x=0;x<width;x++){
-				Point2f point=transPoint(x,y);
-			if (point.x > maxWidth) maxWidth = point.x;
-      			if (point.y > maxHeight) maxHeight = point.y;
-      			if (point.x < minWidth) minWidth = point.x;
-      			if (point.y < minHeight) minHeight = point.y;
-      			
-      		}
-      	}
-	*/
-	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
-	int offsetWidth = abs(minWidth), offsetHeight = abs(minHeight);
-	maxWidth = (int)(sx*width);
-	minWidth = 0;
-	maxHeight = (int)(sy*height);
-	minHeight = 0;
-	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
-	pixmap = new unsigned char[maxWidth*maxHeight*3];
-
-	// Actual scaling
-	for(int y=maxHeight-1;y>=0;y--){
-		for(int x=0;x<maxWidth;x++){
-				Point2f point=transInvPoint(x,y);
-				int pixel = ( (y) * maxWidth + (x)) * 3; 
-				if(point.x >= width || point.x < 0 || point.y >= height || point.y < 0)
+				if(x+1 < width && y-1>=0 )	
 				{
-					// set color as black
-					pixmap[pixel]   = 0; 
-					pixmap[pixel+1] = 0;
-					pixmap[pixel+2] = 0;
+					pixmapInput[PIXEL(x+1,y-1)]  =min(pixmapInput[PIXEL(x+1,y-1)]+(int)(errRed/16.0),255);    
+					pixmapInput[PIXEL(x+1,y-1)+1]=min(pixmapInput[PIXEL(x+1,y-1)+1]+(int)(errGreen/16.0),255);
+					pixmapInput[PIXEL(x+1,y-1)+2]=min(pixmapInput[PIXEL(x+1,y-1)+2]+(int)(errBlue/16.0),255); 
 				}
-				else
+				if(x-1 >=0 && y-1>=0 )	
 				{
-					int pixelInput = ((int)point.y * width + (int)point.x)*3;
-					pixmap[pixel]   = pixmapInput[pixelInput];
-                                        pixmap[pixel+1] = pixmapInput[pixelInput+1];
-				        pixmap[pixel+2] = pixmapInput[pixelInput+2];
+					pixmapInput[PIXEL(x-1,y-1)]  =min(pixmapInput[PIXEL(x-1,y-1)]+(int)(errRed*3/16.0),255);    
+					pixmapInput[PIXEL(x-1,y-1)+1]=min(pixmapInput[PIXEL(x-1,y-1)+1]+(int)(errGreen*3/16.0),255);
+					pixmapInput[PIXEL(x-1,y-1)+2]=min(pixmapInput[PIXEL(x-1,y-1)+2]+(int)(errBlue*3/16.0),255); 
 				}
-		}
-	}
 
-	width = maxWidth;
-	height= maxHeight;
+				//*/
 
-	//exit(0);
-		
-	}
-	else if(input == "perspective")
-	{
-		if (argc < 5) {
-			std::cout<< "Usage: " << argv[0] << " perspective <image> <a> <b>"  << std::endl;
-			return 1;
-		}
+				if(pixmapRet[pixel]<0 || pixmapRet[pixel+1]<0 || pixmapRet[pixel+2]<0||pixmapRet[pixel]>255 || pixmapRet[pixel+1]>255 || pixmapRet[pixel+2]>255  )
+					cout<<"WHAT!!!";
+				pixmapRet[pixel]  = min((int)pixmapRet[pixel], 255)  ;
+				pixmapRet[pixel+1]= min((int)pixmapRet[pixel+1],255) ;
+				pixmapRet[pixel+2]= min((int)pixmapRet[pixel+2],255) ;
 
-
-		string Image = argv[2];
-		double a=atof(argv[3]);
-		double b=atof(argv[4]);
-		cout<<"perspective a,b: "<<a<<", "<<b<<endl;
-
-		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
-
-		width = widthFore;
-		height = heightFore;
-
-		printf("W %d, H %d\n", width ,height);
-		double trans[3][3]={
-			{1 , 0, 0},
-			{0 , 1, 0},
-			{a , b, 1}
-		};
-		double transInverse[3][3] ={
-			{1 , 0, 0},
-			{0 , 1, 0},
-			{-a , -b, 1}
-		}; 
-		copyMatToTrans(trans);
-		copyMatToTransInv(transInverse);
-
-        // calculating new width and height
-        int maxWidth = INT_MIN,minWidth=INT_MAX,maxHeight=INT_MIN,minHeight=INT_MAX;
-        //*
-	for(int y=height-1;y>=0;y--){
-			for(int x=0;x<width;x++){
-				Point2f point=transPoint(x,y);
-			if (point.x > maxWidth) maxWidth = point.x;
-      			if (point.y > maxHeight) maxHeight = point.y;
-      			if (point.x < minWidth) minWidth = point.x;
-      			if (point.y < minHeight) minHeight = point.y;
-      			
-      		}
-      	}
-	//*/
-	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
-	// int offsetWidth = abs(minWidth), offsetHeight = abs(minHeight);
-	int offsetWidth = abs(minWidth), offsetHeight = abs(minHeight);
-	maxWidth = maxWidth-minWidth;
-	minWidth = minWidth-minWidth;
-	maxHeight = maxHeight-minHeight;
-	minHeight = minHeight-minHeight;
-	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
-	pixmap = new unsigned char[maxWidth*maxHeight*3];
-
-	// Actual perspective transform
-	for(int y=maxHeight-1;y>=0;y--){
-		for(int x=0;x<maxWidth;x++){
-				Point2f point=transInvPoint(x,y);
-				int pixel = ( (y) * maxWidth + (x)) * 3; 
-				if(point.x >= width || point.x < 0 || point.y >= height || point.y < 0)
-				{
-					// set color as black
-					pixmap[pixel]   = 255; 
-					pixmap[pixel+1] = 255;
-					pixmap[pixel+2] = 255;
-				}
-				else
-				{
-					int pixelInput = ((int)point.y * width + (int)point.x)*3;
-					pixmap[pixel]   = pixmapInput[pixelInput];
-                                        pixmap[pixel+1] = pixmapInput[pixelInput+1];
-				        pixmap[pixel+2] = pixmapInput[pixelInput+2];
-				}
-		}
-	}
-
-	width = maxWidth;
-	height= maxHeight;
-
-	//exit(0);
-		
-	}else if(input == "translate")
-	{
-		if (argc < 5) {
-			std::cout<< "Usage: " << argv[0] << " scale <image> <tx> <ty>"  << std::endl;
-			return 1;
-		}
-
-
-		string Image = argv[2];
-		double tx=atof(argv[3]);
-		double ty=atof(argv[4]);
-		cout<<"scale x,y: "<<tx<<", "<<ty<<endl;
-
-		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
-
-		width = widthFore;
-		height = heightFore;
-
-		printf("W %d, H %d\n", width ,height);
-		double trans[3][3]={
-			{1 , 0, tx},
-			{0 , 1, ty},
-			{0 , 0,  1}
-		};
-		double transInverse[3][3] ={
-			{1 , 0, -tx},
-			{0 , 1, -ty},
-			{0 , 0,  1}
-		}; 
-		copyMatToTrans(trans);
-		copyMatToTransInv(transInverse);
-
-        // calculating new width and height
-        int maxWidth = INT_MIN,minWidth=INT_MAX,maxHeight=INT_MIN,minHeight=INT_MAX;
-        /*
-	for(int y=height-1;y>=0;y--){
-			for(int x=0;x<width;x++){
-				Point2f point=transPoint(x,y);
-			if (point.x > maxWidth) maxWidth = point.x;
-      			if (point.y > maxHeight) maxHeight = point.y;
-      			if (point.x < minWidth) minWidth = point.x;
-      			if (point.y < minHeight) minHeight = point.y;
-      			
-      		}
-      	}
-	*/
-	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
-	// int offsetWidth = abs(minWidth), offsetHeight = abs(minHeight);
-	maxWidth = width + abs(tx);
-	minWidth = 0;
-	maxHeight = height + abs(ty);
-	minHeight = 0;
-	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
-	pixmap = new unsigned char[maxWidth*maxHeight*3];
-
-	// Actual translation
-	for(int y=maxHeight-1;y>=0;y--){
-		for(int x=0;x<maxWidth;x++){
-				Point2f point=transInvPoint(x,y);
-				int pixel = ( (y) * maxWidth + (x)) * 3; 
-				if(point.x >= width || point.x < 0 || point.y >= height || point.y < 0)
-				{
-					// set color as black
-					pixmap[pixel]   = 255; 
-					pixmap[pixel+1] = 255;
-					pixmap[pixel+2] = 255;
-				}
-				else
-				{
-					int pixelInput = ((int)point.y * width + (int)point.x)*3;
-					pixmap[pixel]   = pixmapInput[pixelInput];
-                                        pixmap[pixel+1] = pixmapInput[pixelInput+1];
-				        pixmap[pixel+2] = pixmapInput[pixelInput+2];
-				}
-		}
-	}
-
-	width = maxWidth;
-	height= maxHeight;
-
-	//exit(0);
-		
-	}
-	else if(input == "mirror")
-	{
-		// mirror along y axis
-		if (argc < 3) {
-			std::cout<< "Usage: " << argv[0] << " mirror <image>"  << std::endl;
-			return 1;
-		}
-
-
-		string Image = argv[2];
-		double tx=atof(argv[3]);
-		double ty=atof(argv[4]);
-		cout<<"scale x,y: "<<tx<<", "<<ty<<endl;
-
-        int maxWidth = INT_MIN,minWidth=INT_MAX,maxHeight=INT_MIN,minHeight=INT_MAX;
-		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
-
-		width = widthFore;
-		height = heightFore;
-	maxWidth = width;
-	minWidth = 0;
-	maxHeight = height;
-	minHeight = 0;
-	printf("maxW %d, minW %d, maxH %d, minH %d\n", maxWidth ,minWidth,maxHeight,minHeight);
-	pixmap = new unsigned char[maxWidth*maxHeight*3];
-
-	// Actual translation
-	for(int y=maxHeight-1;y>=0;y--){
-		for(int x=0;x<maxWidth;x++){
-				Point2f point=transInvPoint(x,y);
-				int pixel = ( (y) * maxWidth + (x)) * 3; 
-				if(point.x >= width || point.x < 0 || point.y >= height || point.y < 0)
-				{
-					// set color as black
-					pixmap[pixel]   = 255; 
-					pixmap[pixel+1] = 255;
-					pixmap[pixel+2] = 255;
-				}
-				else
-				{
-					int pixelInput = ((int)y * width + width - (int)x)*3;
-					pixmap[pixel]   = pixmapInput[pixelInput];
-                                        pixmap[pixel+1] = pixmapInput[pixelInput+1];
-				        pixmap[pixel+2] = pixmapInput[pixelInput+2];
-				}
-		}
-	}
-
-	width = maxWidth;
-	height= maxHeight;
-
-	//exit(0);
-		
-	}else if(input == "over")
-	{
-		if (argc < 9) {
-			std::cout<< "Usage: " << argv[0] << " over <background image> <foreground or masking image2> min_hue max_hue min_saturation max_saturation min_value max_value"  << std::endl;
-			return 1;
-		}
-
-
-		string Image = argv[2],foregroundImage = argv[3];
-		double min_hue=atof(argv[4]), max_hue =atof(argv[5]), min_saturation=atof(argv[6]),max_saturation=atof(argv[7]), min_value=atof(argv[8]), max_value=atof(argv[9]);
-
-		unsigned char* pixmapFore = readPPM(foregroundImage,widthFore,heightFore,maxcolor);
-		unsigned char* pixmapBack = readPPM(Image,widthBack,heightBack,maxcolor);
-
-		unsigned char* hsvImage = ImageRGBtoHSV(pixmapFore);
-		double* alphaMap = generateAlphaMap(hsvImage,min_hue,max_hue,min_saturation,max_saturation,min_value,max_value);  
-		double filter[7][7]=	{	
-			{0,0,0,1,0,0,0},
-			{0,0,1,1,1,0,0},
-			{0,1,1,1,1,1,0},
-			{1,1,1,1,1,1,1},
-			{0,1,1,1,1,1,0},
-			{0,0,1,1,1,0,0},
-			{0,0,0,1,0,0,0}, };
-
-		alphaMap = applyFilterErode(alphaMap, filter);
-		alphaMap = applyFilterDilate(alphaMap, filter);
-
-		printf("mH= %f,mxH= %f,mS= %f,mxS= %f,mV= %f,mxV= %f\n",min_hue,max_hue,min_saturation,max_saturation,min_value,max_value);
-		if(widthFore != widthBack || heightFore != heightBack)
-		{
-			printf("height or width mismatch between fore and background images\n wF %d,hF %d,wB %d,hB %d\n",widthFore,widthBack,heightFore,heightBack);
-			return 1;
-		}
-		width = widthFore;height = heightFore;
-
-		for(int y = height-1; y >= 0; y--) 
-		{
-			for(int x = 0; x < width; x++) 
-			{
-				int pixel = (y * width + x) * 3; 
-				// set the following line for normal operation in photoshop
-				// alphaMap[pixel]=0.5;
-				pixmap[pixel]   = alphaMap[pixel]*pixmapBack[pixel]   + (1-alphaMap[pixel])*pixmapFore[pixel]; 
-				pixmap[pixel+1] = alphaMap[pixel]*pixmapBack[pixel+1] + (1-alphaMap[pixel])*pixmapFore[pixel+1];
-				pixmap[pixel+2] = alphaMap[pixel]*pixmapBack[pixel+2] + (1-alphaMap[pixel])*pixmapFore[pixel+2];
 			}
 		}
+		printf("W %d, H %d\n", width ,height);
 
+		width = widthFore;
+		height = heightFore;
+
+		pixmap = pixmapRet;
+	//exit(0);
+		
+	}
+	else if(input == "random")
+	{
+		if (argc < 2) {
+			std::cout<< "Usage: " << argv[0] << " random <image> [numToReduce]"  << std::endl;
+			return 1;
+		}
+
+
+		string Image = argv[2];
+		if(argc == 4)	numToReduce=atof(argv[3]);
+
+		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
+		width = widthFore; height = heightFore;
+		unsigned char* pixmapRet = new unsigned char[width * height * 3]; 
+		printf("W %d, H %d\n", width ,height);
+		int level = numToReduce;
+		int step = 255 / level;
+		// cout<<step<<endl<<round(200*1.0/255*3)*step<<endl;
+		for(int y=height-1;y>=0;y--){
+			for(int x=0;x<width;x++){
+				
+				int pixel = ( y * width + x) * 3; 
+				pixmapInput[pixel]  +=  ((float)((float)(rand()%100)/(100.0)) - 0.5)*step;
+				pixmapInput[pixel+1]+=  ((float)((float)(rand()%100)/(100.0)) - 0.5)*step;		
+				pixmapInput[pixel+2]+=  ((float)((float)(rand()%100)/(100.0)) - 0.5)*step;
+				pixmapRet[pixel]  = round(pixmapInput[pixel]  *1.0/255*level)*step   ;
+				pixmapRet[pixel+1]= round(pixmapInput[pixel+1]*1.0/255*level)*step ;
+				pixmapRet[pixel+2]= round(pixmapInput[pixel+2]*1.0/255*level)*step ;
+				double errRed  = abs(pixmapInput[pixel] - pixmapRet[pixel]);
+				double errBlue = abs(pixmapInput[pixel+1] - pixmapRet[pixel+1]);
+				double errGreen= abs(pixmapInput[pixel+2] - pixmapRet[pixel+2]);
+
+
+				//printf("W %d, H %d\n",PIXEL(x+1,y),height);
+				//*
+				if(x+1 < width )		
+				{
+					errRed = 
+					pixmapInput[PIXEL(x+1,y)]  =min(pixmapInput[PIXEL(x+1,y)]+(int)(errRed/2.0),255);
+					pixmapInput[PIXEL(x+1,y)+1]=min(pixmapInput[PIXEL(x+1,y)+1]+(int)(errGreen/2.0),255);
+					pixmapInput[PIXEL(x+1,y)+2]=min(pixmapInput[PIXEL(x+1,y)+2]+(int)(errBlue/2.0),255);
+				}
+				if(y-1 >= 0)			
+				{
+					pixmapInput[PIXEL(x,y-1)]  =min(pixmapInput[PIXEL(x,y-1)]+(int)(errRed/4.0),255);    
+					pixmapInput[PIXEL(x,y-1)+1]=min(pixmapInput[PIXEL(x,y-1)+1]+(int)(errGreen/4.0),255);
+					pixmapInput[PIXEL(x,y-1)+2]=min(pixmapInput[PIXEL(x,y-1)+2]+(int)(errBlue/4.0),255); 
+				}
+				if(x+1 < width && y-1>=0 )	
+				{
+					pixmapInput[PIXEL(x+1,y-1)]  =min(pixmapInput[PIXEL(x+1,y-1)]+(int)(errRed/4.0),255);    
+					pixmapInput[PIXEL(x+1,y-1)+1]=min(pixmapInput[PIXEL(x+1,y-1)+1]+(int)(errGreen/4.0),255);
+					pixmapInput[PIXEL(x+1,y-1)+2]=min(pixmapInput[PIXEL(x+1,y-1)+2]+(int)(errBlue/4.0),255); 
+				}
+				//*/
+
+				if(pixmapRet[pixel]<0 || pixmapRet[pixel+1]<0 || pixmapRet[pixel+2]<0||pixmapRet[pixel]>255 || pixmapRet[pixel+1]>255 || pixmapRet[pixel+2]>255  )
+					cout<<"WHAT!!!";
+				pixmapRet[pixel]  = min((int)pixmapRet[pixel], 255)  ;
+				pixmapRet[pixel+1]= min((int)pixmapRet[pixel+1],255) ;
+				pixmapRet[pixel+2]= min((int)pixmapRet[pixel+2],255) ;
+
+			}
+		}
+		printf("W %d, H %d\n", width ,height);
+
+		width = widthFore;
+		height = heightFore;
+
+		pixmap = pixmapRet;
+	//exit(0);
+		
+	}
+
+	else if(input == "uniform")
+	{
+		if (argc < 2) {
+			std::cout<< "Usage: " << argv[0] << " uniform <image> [numToReduce]"  << std::endl;
+			return 1;
+		}
+
+
+		string Image = argv[2];
+		if(argc == 4)	numToReduce=atof(argv[3]);
+
+		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
+		width = widthFore; height = heightFore;
+		unsigned char* pixmapRet = new unsigned char[width * height * 3]; 
+		printf("W %d, H %d\n", width ,height);
+		int level = numToReduce;
+		int step = 255 / level;
+		// cout<<step<<endl<<round(200*1.0/255*3)*step<<endl;
+		for(int y=height-1;y>=0;y--){
+			for(int x=0;x<width;x++){
+				
+				int pixel = ( y * width + x) * 3; 
+				pixmapRet[pixel]  = round(pixmapInput[pixel]*1.0/255*level)*step   ;
+				pixmapRet[pixel+1]= round(pixmapInput[pixel+1]*1.0/255*level)*step ;
+				pixmapRet[pixel+2]= round(pixmapInput[pixel+2]*1.0/255*level)*step ;
+				double errRed  = abs(pixmapInput[pixel] - pixmapRet[pixel]);
+				double errBlue = abs(pixmapInput[pixel+1] - pixmapRet[pixel+1]);
+				double errGreen= abs(pixmapInput[pixel+2] - pixmapRet[pixel+2]);
+
+
+				//printf("W %d, H %d\n",PIXEL(x+1,y),height);
+				//*
+				if(x+1 < width )		
+				{
+					pixmapInput[PIXEL(x+1,y)]  =min(pixmapInput[PIXEL(x+1,y)]+(int)(errRed/2.0),255);
+					pixmapInput[PIXEL(x+1,y)+1]=min(pixmapInput[PIXEL(x+1,y)+1]+(int)(errGreen/2.0),255);
+					pixmapInput[PIXEL(x+1,y)+2]=min(pixmapInput[PIXEL(x+1,y)+2]+(int)(errBlue/2.0),255);
+				}
+				if(y-1 >= 0)			
+				{
+					pixmapInput[PIXEL(x,y-1)]  =min(pixmapInput[PIXEL(x,y-1)]+(int)(errRed/4.0),255);    
+					pixmapInput[PIXEL(x,y-1)+1]=min(pixmapInput[PIXEL(x,y-1)+1]+(int)(errGreen/4.0),255);
+					pixmapInput[PIXEL(x,y-1)+2]=min(pixmapInput[PIXEL(x,y-1)+2]+(int)(errBlue/4.0),255); 
+				}
+				if(x+1 < width && y-1>=0 )	
+				{
+					pixmapInput[PIXEL(x+1,y-1)]  =min(pixmapInput[PIXEL(x+1,y-1)]+(int)(errRed/4.0),255);    
+					pixmapInput[PIXEL(x+1,y-1)+1]=min(pixmapInput[PIXEL(x+1,y-1)+1]+(int)(errGreen/4.0),255);
+					pixmapInput[PIXEL(x+1,y-1)+2]=min(pixmapInput[PIXEL(x+1,y-1)+2]+(int)(errBlue/4.0),255); 
+				}
+				//*/
+
+				if(pixmapRet[pixel]<0 || pixmapRet[pixel+1]<0 || pixmapRet[pixel+2]<0||pixmapRet[pixel]>255 || pixmapRet[pixel+1]>255 || pixmapRet[pixel+2]>255  )
+					cout<<"WHAT!!!";
+				pixmapRet[pixel]  = min((int)pixmapRet[pixel], 255)  ;
+				pixmapRet[pixel+1]= min((int)pixmapRet[pixel+1],255) ;
+				pixmapRet[pixel+2]= min((int)pixmapRet[pixel+2],255) ;
+
+			}
+		}
+		printf("W %d, H %d\n", width ,height);
+
+		width = widthFore;
+		height = heightFore;
+
+		pixmap = pixmapRet;
+	//exit(0);
 		
 	}
 	else
@@ -1073,7 +861,7 @@ int main(int argc, char *argv[])
 	glutInitWindowPosition(100, 100); // Where the window will display on-screen.
 	glutInitWindowSize(width, height);
 	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
-	glutCreateWindow("pr07");
+	glutCreateWindow("pr08");
 	init();
 	glutReshapeFunc(windowResize);
 	glutDisplayFunc(windowDisplay);
