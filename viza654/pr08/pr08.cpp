@@ -40,12 +40,15 @@ using namespace std;
 int width, height, maxcolor=255;
 unsigned char *pixmap;
 string format = "P6";
-int clusters = 4;
+
+int clusterN = 2;
+int clusters = clusterN*clusterN;
+
 int PIXEL(int x,int y) {
 	return (y * width + x) * 3;
 }
 int PIXELC(int x,int y) {
-	return ((clusters/2)*y * width + (clusters/2)*x) * 3;
+	return ((clusterN)*y * width + (clusterN)*x) * 3;
 }
 
 // =============================================================================
@@ -652,28 +655,71 @@ int main(int argc, char *argv[])
 	if(input == "screen")
 	{
 		if (argc < 2) {
-			std::cout<< "Usage: " << argv[0] << " screen <image> [numToReduce]"  << std::endl;
+			std::cout<< "Usage: " << argv[0] << " screen <image> [clusterN]"  << std::endl;
 			return 1;
 		}
-		int clusters = 4;
 		string Image = argv[2];
-		if(argc == 4)	numToReduce=atof(argv[3]);
+		// if(argc == 4)	numToReduce=atof(argv[3]);
 		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
 		width = widthFore;
 		height = heightFore;
+		if(argc == 4)	clusterN = atoi(argv[3]);
+		clusters = clusterN*clusterN;
 
-		unsigned char* pixmapRet = new unsigned char[width * height * 3*clusters]; 
+		unsigned char* pixmapRet = new unsigned char[width * height * 3]; 
 		printf("W %d, H %d\n", width ,height);
 		int step = 255 / numToReduce;
+		int intensityStep = 256/clusters;
 		// cout<<step<<endl<<round(200*1.0/255*3)*step<<endl;
-		for(int y=height-1;y>=0;y--){
-			for(int x=0;x<width;x++){
+		for(int y=height-1;y>=0;y-=clusterN){
+			for(int x=0;x<width;x+=clusterN){
 				
-				int pixel = ( (clusters/2)*y * width + (clusters/2)*x) * 3; 
+				int pixel = ( y * width + x) * 3; 
 				int value = pixmapInput[pixel];
-				//printf("ind %d ", PIXELC(x,y));
 
+				int cntr = 0;
+				int avg = 0;
+				int bright = value/intensityStep; // fill that many cells with white
+				for(int yj=0;yj<clusterN ;yj++){
+					for(int xi=0;xi<clusterN;xi++){
+						if(x+xi >= width || y-yj<0 )
+							continue;
+						avg+=pixmapInput[PIXEL(x+xi,y-yj)];
+						avg+=pixmapInput[PIXEL(x+xi,y-yj)+1];
+						avg+=pixmapInput[PIXEL(x+xi,y-yj)+2];
+						cntr+=3;
+					}
+				}
+
+				avg /=cntr;
+				// calculate the radius of sphere
+				double r = (sqrt(2))*(avg/255.0)*(clusterN/2.0);
+				int centerY=y-clusterN/2.0;
+				int centerX=x+clusterN/2.0;
 				// if(PIXELC(x,y) < 0 || PIXELC(x+1,y)<0 || PIXELC(x,y-1)<0 || PIXELC(x+1,y-1)<0)
+				for(int yj=0;yj<clusterN ;yj++){
+					for(int xi=0;xi<clusterN;xi++){
+						if(x+xi >= width || y-yj<0 )
+							continue;
+						float tmpx= x+xi,tmpy= y-yj,d= sqrt( pow(tmpx-centerX,2)+pow(tmpy-centerY,2) );
+						if(d<=r){
+							pixmapRet[PIXEL(x+xi,y-yj)] = 255;
+							pixmapRet[PIXEL(x+xi,y-yj)+1] = 255;
+							pixmapRet[PIXEL(x+xi,y-yj)+2] = 255;
+						}
+						else
+						{
+
+							pixmapRet[PIXEL(x+xi,y-yj)] = 0;
+							pixmapRet[PIXEL(x+xi,y-yj)+1] = 0;
+							pixmapRet[PIXEL(x+xi,y-yj)+2] = 0;
+						}
+					}
+				}
+				
+
+				/*
+				// testing with only 2 clusters
 				if(x+1 >= width || y-1<0 )
 					continue;
 
@@ -714,6 +760,7 @@ int main(int argc, char *argv[])
 					pixmapRet[PIXELC(x,y-1)]   = 255;pixmapRet[PIXELC(x,y-1)+1]   = 255;pixmapRet[PIXELC(x,y-1)+2]   = 255;
 					pixmapRet[PIXELC(x+1,y-1)] = 255;pixmapRet[PIXELC(x+1,y-1)+1] = 255;pixmapRet[PIXELC(x+1,y-1)+2] = 255;
 				}
+				// */
 
 
 				if(pixmapRet[pixel]<0 || pixmapRet[pixel+1]<0 || pixmapRet[pixel+2]<0||pixmapRet[pixel]>255 || pixmapRet[pixel+1]>255 || pixmapRet[pixel+2]>255  )

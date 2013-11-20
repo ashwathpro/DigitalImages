@@ -92,7 +92,7 @@ Random noise dithering with a level of 8<br>Command: ./pr08 random horse.ppm 8
 Original Image </td>
 <td align=center>
 <font size=4>
-<img src=uniform8.png width=400><br>
+<img src=random8.png width=400><br>
 Uniform dithering with a level of 8. uniform structure can be seen as compared to the noisy random dither<br>Command: ./pr08 uniform horse.ppm 8
 </td>
 </tr>
