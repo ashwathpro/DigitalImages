@@ -24,10 +24,10 @@
 #include <fstream>
 #include <cassert>
 #include <sstream>
+#include <iterator>
 #include <string>
 #include "cyPoint.h"
 #include "Color.h"
-
 
 using namespace cy;
 using namespace std;
@@ -39,10 +39,13 @@ using namespace std;
 // =============================================================================
 int width, height, maxcolor=255;
 unsigned char *pixmap;
-
-
+string format = "P6";
+int clusters = 4;
 int PIXEL(int x,int y) {
 	return (y * width + x) * 3;
+}
+int PIXELC(int x,int y) {
+	return ((clusters/2)*y * width + (clusters/2)*x) * 3;
 }
 
 // =============================================================================
@@ -66,6 +69,7 @@ static void windowDisplay(void)
   glClear(GL_COLOR_BUFFER_BIT);
   glRasterPos2i(0,0);
   glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+  //glPixelZoom(1.0f/3.0f,1.0f);
   glDrawPixels(width, height, GL_RGB, GL_UNSIGNED_BYTE, pixmap);
   glFlush();
 }
@@ -103,29 +107,32 @@ unsigned char* readPPM(const string filename,int  &width,int  &height,int  &maxc
 		    printf("\n Magic number %s of the input file is not P6 or P5\n", magic);
 		    exit(0);
 	    }
+	    // continue with p6 algo
+
+	    //skip all comment lines 
+	    ch=fgetc(fp);	
+	    do {
+		    if (ch == '#');
+		    ch = fgetc(fp);
+	    } while (ch == '\n');
+	    ungetc(ch, fp);
+	    ch= fgetc(fp);
+	    while (ch == '#') 
+	    {
+		    while (fgetc(fp) != '\n') ;
+		    ch = fgetc(fp);
+	    }
+	    ungetc(ch, fp);
+	    fscanf (fp, "%d %d %d", &width, &height, &maxcolor);	
+	    fgetc(fp);
+	    readpixmap = new unsigned char[width * height * 3];         
+	    int y, x, pixel;
+	    unsigned char red, green, blue;
+
 	    if(magic[1]=='6')
 	    {
-		    // continue with p6 algo
+		    format = "P6";
 
-		    //skip all comment lines 
-		    ch=fgetc(fp);	
-		    do {
-			    if (ch == '#');
-			    ch = fgetc(fp);
-		    } while (ch == '\n');
-		    ungetc(ch, fp);
-		    ch= fgetc(fp);
-		    while (ch == '#') 
-		    {
-			    while (fgetc(fp) != '\n') ;
-			    ch = fgetc(fp);
-		    }
-		    ungetc(ch, fp);
-		    fscanf (fp, "%d %d %d", &width, &height, &maxcolor);	
-		    fgetc(fp);
-		    readpixmap = new unsigned char[width * height * 3];         
-		    int y, x, pixel;
-		    unsigned char red, green, blue;
 		    for(y = height-1; y >= 0; y--) 
 		    {
 			    for(x = 0; x < width; x++) 
@@ -142,38 +149,23 @@ unsigned char* readPPM(const string filename,int  &width,int  &height,int  &maxc
 	    }
 	    else if(magic[1]=='5')
 	    {
-		    // continue with p5 algo
-		    //
-		    ch=fgetc(fp);	
-		    do {
-			    if (ch == '#');
-			    ch = fgetc(fp);
-		    } while (ch == '\n');
-		    ungetc(ch, fp);
-		    ch= fgetc(fp);
-		    while (ch == '#') 
-		    {
-			    while (fgetc(fp) != '\n') ;
-			    ch = fgetc(fp);
-		    }
-		    ungetc(ch, fp);
-		    fscanf (fp, "%d %d %d", &width, &height, &maxcolor);	
-		    fgetc(fp);
-		    readpixmap = new unsigned char[width * height * 1];         
-		    int y, x, pixel;
-		    unsigned char red, green, blue;
+		    format = "P5";
+
 		    for(y = height-1; y >= 0; y--) 
 		    {
 			    for(x = 0; x < width; x++) 
 			    {
 				    fscanf(fp, "%c", &red);
-				    pixel = (y * width + x); 
+				    pixel = (y * width + x) * 3; 
 				    readpixmap[pixel] = red;
-				   
+				    pixel++;
+				    readpixmap[pixel] = red;
+				    pixel++;
+				    readpixmap[pixel] = red;
 			    }
 		    }
-
 	    }
+
 	    fclose(fp);
 	    return readpixmap;
 
@@ -190,7 +182,16 @@ void writePPM(const string filename)
 		    printf("\n File cannot be written!! Error opening file!\n");
 		    exit(0);
 	    }
-	    char *magic = "P6";	
+	    char *magic;	
+	    if(format == "P6")
+	    {
+		    magic = "P6";
+	    }else if(format == "P5")
+	    {
+		    magic = "P5";
+	    }
+
+
 	    fprintf(fp, "%s", magic);
 	    	    
 	    fputc('\n',fp);
@@ -202,19 +203,39 @@ void writePPM(const string filename)
 	    // pixmap = new unsigned char[width * height * 3];         
 	    int y, x, pixel;
 	    unsigned char red, green, blue;
-	    for(y = height-1; y >= 0; y--) 
+	    if(format == "P6")
 	    {
-		    for(x = 0; x < width; x++) 
+		    for(y = height-1; y >= 0; y--) 
 		    {
-			    pixel = (y * width + x) * 3; 
-			    red = pixmap[pixel];
-			    pixel++;
-			    green = pixmap[pixel];
-			    pixel++;
-			    blue = pixmap[pixel];
-			    fprintf(fp, "%c%c%c", red, green, blue);
+			    for(x = 0; x < width; x++) 
+			    {
+				    pixel = (y * width + x) * 3; 
+				    red = pixmap[pixel];
+				    pixel++;
+				    green = pixmap[pixel];
+				    pixel++;
+				    blue = pixmap[pixel];
+				    fprintf(fp, "%c%c%c", red, green, blue);
+			    }
 		    }
 	    }
+	    else if(format == "P5")
+	    {
+		    for(y = height-1; y >= 0; y--) 
+		    {
+			    for(x = 0; x < width; x++) 
+			    {
+				    pixel = (y * width + x) * 3; 
+				    red = pixmap[pixel];
+				    pixel++;
+				    green = pixmap[pixel];
+				    pixel++;
+				    blue = pixmap[pixel];
+				    fprintf(fp, "%c", red);
+			    }
+		    }
+	    }
+
 	    fclose(fp);
 
 }			
@@ -628,7 +649,91 @@ int main(int argc, char *argv[])
 	width = 640;
 	height = 480;
 	pixmap = new unsigned char[width * height * 3]; 
-	if(input == "floyd")
+	if(input == "screen")
+	{
+		if (argc < 2) {
+			std::cout<< "Usage: " << argv[0] << " screen <image> [numToReduce]"  << std::endl;
+			return 1;
+		}
+		int clusters = 4;
+		string Image = argv[2];
+		if(argc == 4)	numToReduce=atof(argv[3]);
+		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
+		width = widthFore;
+		height = heightFore;
+
+		unsigned char* pixmapRet = new unsigned char[width * height * 3*clusters]; 
+		printf("W %d, H %d\n", width ,height);
+		int step = 255 / numToReduce;
+		// cout<<step<<endl<<round(200*1.0/255*3)*step<<endl;
+		for(int y=height-1;y>=0;y--){
+			for(int x=0;x<width;x++){
+				
+				int pixel = ( (clusters/2)*y * width + (clusters/2)*x) * 3; 
+				int value = pixmapInput[pixel];
+				//printf("ind %d ", PIXELC(x,y));
+
+				// if(PIXELC(x,y) < 0 || PIXELC(x+1,y)<0 || PIXELC(x,y-1)<0 || PIXELC(x+1,y-1)<0)
+				if(x+1 >= width || y-1<0 )
+					continue;
+
+				if(value >= 0 && value < 52)
+				{
+					pixmapRet[PIXELC(x,y)]     = 0;pixmapRet[PIXELC(x,y)+1]     = 0;pixmapRet[PIXELC(x,y)+2]     = 0;
+					pixmapRet[PIXELC(x+1,y)]   = 0;pixmapRet[PIXELC(x+1,y)+1]   = 0;pixmapRet[PIXELC(x+1,y)+2]   = 0;
+					pixmapRet[PIXELC(x,y-1)]   = 0;pixmapRet[PIXELC(x,y-1)+1]   = 0;pixmapRet[PIXELC(x,y-1)+2]   = 0;
+					pixmapRet[PIXELC(x+1,y-1)] = 0;pixmapRet[PIXELC(x+1,y-1)+1] = 0;pixmapRet[PIXELC(x+1,y-1)+2] = 0;
+				}
+				else if(value >= 52 && value < 104)
+				{
+					pixmapRet[PIXELC(x,y)]     = 0;pixmapRet[PIXELC(x,y)+1]     = 0;pixmapRet[PIXELC(x,y)+2]     = 0;
+					pixmapRet[PIXELC(x+1,y)]   = 255;pixmapRet[PIXELC(x+1,y)+1]   = 255;pixmapRet[PIXELC(x+1,y)+2]   = 255;
+					pixmapRet[PIXELC(x,y-1)]   = 0;pixmapRet[PIXELC(x,y-1)+1]   = 0;pixmapRet[PIXELC(x,y-1)+2]   = 0;
+					pixmapRet[PIXELC(x+1,y-1)] = 0;pixmapRet[PIXELC(x+1,y-1)+1] = 0;pixmapRet[PIXELC(x+1,y-1)+2] = 0;
+				}
+
+				else if(value >= 104 && value < 156)
+				{
+					pixmapRet[PIXELC(x,y)]     = 0;pixmapRet[PIXELC(x,y)+1]     = 0;pixmapRet[PIXELC(x,y)+2]     = 0;
+					pixmapRet[PIXELC(x+1,y)]   = 255;pixmapRet[PIXELC(x+1,y)+1]   = 255;pixmapRet[PIXELC(x+1,y)+2]   = 255;
+					pixmapRet[PIXELC(x,y-1)]   = 255;pixmapRet[PIXELC(x,y-1)+1]   = 255;pixmapRet[PIXELC(x,y-1)+2]   = 255;
+					pixmapRet[PIXELC(x+1,y-1)] = 0;pixmapRet[PIXELC(x+1,y-1)+1] = 0;pixmapRet[PIXELC(x+1,y-1)+2] = 0;
+				}
+
+				else if(value >= 156 && value < 208)
+				{
+					pixmapRet[PIXELC(x,y)]     = 0;pixmapRet[PIXELC(x,y)+1]     = 0;pixmapRet[PIXELC(x,y)+2]     = 0;
+					pixmapRet[PIXELC(x+1,y)]   = 255;pixmapRet[PIXELC(x+1,y)+1]   = 255;pixmapRet[PIXELC(x+1,y)+2]   = 255;
+					pixmapRet[PIXELC(x,y-1)]   = 255;pixmapRet[PIXELC(x,y-1)+1]   = 255;pixmapRet[PIXELC(x,y-1)+2]   = 255;
+					pixmapRet[PIXELC(x+1,y-1)] = 255;pixmapRet[PIXELC(x+1,y-1)+1] = 255;pixmapRet[PIXELC(x+1,y-1)+2] = 255;
+				}
+				else if(value >=208 && value < 256)
+				{
+					pixmapRet[PIXELC(x,y)]     = 255;pixmapRet[PIXELC(x,y)+1]     = 255;pixmapRet[PIXELC(x,y)+2]     = 255;
+					pixmapRet[PIXELC(x+1,y)]   = 255;pixmapRet[PIXELC(x+1,y)+1]   = 255;pixmapRet[PIXELC(x+1,y)+2]   = 255;
+					pixmapRet[PIXELC(x,y-1)]   = 255;pixmapRet[PIXELC(x,y-1)+1]   = 255;pixmapRet[PIXELC(x,y-1)+2]   = 255;
+					pixmapRet[PIXELC(x+1,y-1)] = 255;pixmapRet[PIXELC(x+1,y-1)+1] = 255;pixmapRet[PIXELC(x+1,y-1)+2] = 255;
+				}
+
+
+				if(pixmapRet[pixel]<0 || pixmapRet[pixel+1]<0 || pixmapRet[pixel+2]<0||pixmapRet[pixel]>255 || pixmapRet[pixel+1]>255 || pixmapRet[pixel+2]>255  )
+					cout<<"WHAT!!!";
+				pixmapRet[pixel]  = min((int)pixmapRet[pixel], 255)  ;
+				pixmapRet[pixel+1]= min((int)pixmapRet[pixel+1],255) ;
+				pixmapRet[pixel+2]= min((int)pixmapRet[pixel+2],255) ;
+
+			}
+		}
+		printf("W %d, H %d\n", width ,height);
+
+		width = widthFore;
+		height = heightFore;
+
+		pixmap = pixmapRet;
+	//exit(0);
+		
+	}
+	else if(input == "floyd")
 	{
 		if (argc < 2) {
 			std::cout<< "Usage: " << argv[0] << " floyd <image> [numToReduce]"  << std::endl;
@@ -638,9 +743,7 @@ int main(int argc, char *argv[])
 
 		string Image = argv[2];
 		if(argc == 4)	numToReduce=atof(argv[3]);
-
 		unsigned char* pixmapInput = readPPM(Image,widthFore,heightFore,maxcolor);
-		width = widthFore; height = heightFore;
 		unsigned char* pixmapRet = new unsigned char[width * height * 3]; 
 		printf("W %d, H %d\n", width ,height);
 		int step = 255 / numToReduce;
@@ -756,13 +859,20 @@ int main(int argc, char *argv[])
 					pixmapInput[PIXEL(x+1,y-1)+1]=min(pixmapInput[PIXEL(x+1,y-1)+1]+(int)(errGreen/4.0),255);
 					pixmapInput[PIXEL(x+1,y-1)+2]=min(pixmapInput[PIXEL(x+1,y-1)+2]+(int)(errBlue/4.0),255); 
 				}
-				//*/
+				// */
 
 				if(pixmapRet[pixel]<0 || pixmapRet[pixel+1]<0 || pixmapRet[pixel+2]<0||pixmapRet[pixel]>255 || pixmapRet[pixel+1]>255 || pixmapRet[pixel+2]>255  )
 					cout<<"WHAT!!!";
-				pixmapRet[pixel]  = min((int)pixmapRet[pixel], 255)  ;
-				pixmapRet[pixel+1]= min((int)pixmapRet[pixel+1],255) ;
-				pixmapRet[pixel+2]= min((int)pixmapRet[pixel+2],255) ;
+				pixmapRet[pixel]  = max(min((int)pixmapRet[pixel], 255),0)  ;
+				pixmapRet[pixel+1]= max(min((int)pixmapRet[pixel+1],255),0) ;
+				pixmapRet[pixel+2]= max(min((int)pixmapRet[pixel+2],255),0) ;
+
+				/*
+				pixmapInput[pixel]  = max(min((int)pixmapInput[pixel], 255),0)  ;
+				pixmapInput[pixel+1]= max(min((int)pixmapInput[pixel+1],255),0) ;
+				pixmapInput[pixel+2]= max(min((int)pixmapInput[pixel+2],255),0) ;
+				*/
+
 
 			}
 		}
@@ -793,10 +903,18 @@ int main(int argc, char *argv[])
 		printf("W %d, H %d\n", width ,height);
 		int step = 255 / numToReduce;
 		// cout<<step<<endl<<round(200*1.0/255*3)*step<<endl;
+		float rndx = ((float)((float)(rand()%100)/(100.0)) - 0.5);
+		float rndy = ((float)((float)(rand()%100)/(100.0)) - 0.5);
+		float rndz = ((float)((float)(rand()%100)/(100.0)) - 0.5);
+
 		for(int y=height-1;y>=0;y--){
 			for(int x=0;x<width;x++){
 				
 				int pixel = ( y * width + x) * 3; 
+				pixmapInput[pixel]  += (int) rndx*step;
+				pixmapInput[pixel+1]+= (int)  rndy*step;		
+				pixmapInput[pixel+2]+= (int)  rndz*step;
+
 				pixmapRet[pixel]  = round(pixmapInput[pixel]*1.0/255*numToReduce)*step   ;
 				pixmapRet[pixel+1]= round(pixmapInput[pixel+1]*1.0/255*numToReduce)*step ;
 				pixmapRet[pixel+2]= round(pixmapInput[pixel+2]*1.0/255*numToReduce)*step ;
@@ -825,7 +943,7 @@ int main(int argc, char *argv[])
 					pixmapInput[PIXEL(x+1,y-1)+1]=min(pixmapInput[PIXEL(x+1,y-1)+1]+(int)(errGreen/4.0),255);
 					pixmapInput[PIXEL(x+1,y-1)+2]=min(pixmapInput[PIXEL(x+1,y-1)+2]+(int)(errBlue/4.0),255); 
 				}
-				//*/
+				// */
 
 				if(pixmapRet[pixel]<0 || pixmapRet[pixel+1]<0 || pixmapRet[pixel+2]<0||pixmapRet[pixel]>255 || pixmapRet[pixel+1]>255 || pixmapRet[pixel+2]>255  )
 					cout<<"WHAT!!!";
@@ -854,6 +972,12 @@ int main(int argc, char *argv[])
 	// OpenGL Commands:
 	// Once "glutMainLoop" is executed, the program loops indefinitely to all
 	// glut functions.  
+	// Write the output file that is being displayed
+	//*
+	if(format == "P6")	writePPM("output.ppm");
+	else if(format == "P5")	writePPM("output.pgm");
+	// */
+
 	glutInit(&argc, argv);
 	glutInitWindowPosition(100, 100); // Where the window will display on-screen.
 	glutInitWindowSize(width, height);
