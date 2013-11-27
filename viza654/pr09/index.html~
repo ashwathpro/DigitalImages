@@ -1,0 +1,119 @@
+<head>
+<title>Viza654 - Digital Image</title>
+</head>
+<body text="#FFFFFF" bgcolor="#050505">
+<center>
+<table border=0 cellspacing=5 cellpadding=5 width=90%>
+<tr>
+<td align=center>
+<b><font size=6>Project 09: Final Video<br></font>
+<b><font size=5>Ashwath Rajendran <br></font>
+</td>
+
+<td align=center>
+<font size=3><a href = "pr09.cpp">CPP file</a><br></font>
+<font size=3><a href = "Makefile">Make file</a> <br></font>
+<font size=3><a href = "https://github.com/ashwathpro/DigitalImages/tree/master/viza654/pr07">All the code</a> <br></font>
+</td>
+
+</tr> 
+
+<tr>
+<td align=center>
+<font size=4>
+Instructions: ./pr07 with options 
+ </td>
+<td align=center>
+<font size=4>
+ rotation input_image rotation_angle_in_radians <br>
+ scale input_image scale_x scale_y <br>
+ translate input_image translate_x translate_y <br>
+ mirror input_image <br>
+
+</td>
+</tr>
+
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=lambo.jpg width=400><br>
+Original Image </td>
+<td align=center>
+<font size=4>
+<img src=lamboRotated.png width=400><br>
+Rotation Command: ./pr07 rotation Lamborghini-Murcielago.ppm -.75 (Input angle in radians, -.75 radians = -45 degrees)
+</td>
+</tr>
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=lambo.jpg width=400><br>
+Original Image </td>
+<td align=center>
+<font size=4>
+<img src=lamboScaled.png height=450 width=240><br>
+Scaling Command: ./pr07 scale Lamborghini-Murcielago.ppm 0.5 1.5
+</td>
+</tr>
+
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=lambo.jpg width=400><br>
+Original Image </td>
+<td align=center>
+<font size=4>
+<img src=lamboTranslated.png width=400><br>
+Translate Command: ./pr07 translate Lamborghini-Murcielago.ppm 15 50
+</td>
+</tr>
+
+
+
+
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=lambo.jpg width=400><br>
+Original Image </td>
+<td align=center>
+<font size=4>
+<img src=lamboMirror.png width=400><br>
+Mirror Command: ./pr07 mirror Lamborghini-Murcielago.ppm 
+</td>
+</tr>
+
+
+
+
+
+
+
+
+
+<tr>
+<td align=center>
+<font size=4>
+<img src=error_rotate.png width=400><br>
+Error images while doing rotation operation
+ </td>
+<td align=center>
+<font size=4>
+<img src=abs_error.png width=400><br>
+Error due to absolute value
+</td>
+</tr>
+
+
+</table>
+</center>
+</body>
+</html>
